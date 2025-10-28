@@ -31,7 +31,7 @@ export default router;
  * @swagger
  * /auth/register:
  *   post:
- *     summary: Register as user
+ *     summary: Register a new user account
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -40,12 +40,9 @@ export default router;
  *           schema:
  *             type: object
  *             required:
- *               - name
  *               - email
  *               - password
  *             properties:
- *               name:
- *                 type: string
  *               email:
  *                 type: string
  *                 format: email
@@ -56,9 +53,8 @@ export default router;
  *                 minLength: 8
  *                 description: At least one number and one letter
  *             example:
- *               name: fake name
- *               email: fake@example.com
- *               password: password1
+ *               email: user@example.com
+ *               password: password123
  *     responses:
  *       "201":
  *         description: Created
@@ -68,11 +64,46 @@ export default router;
  *               type: object
  *               properties:
  *                 user:
- *                   $ref: '#/components/schemas/User'
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                       nullable: true
+ *                     role:
+ *                       type: string
+ *                     isEmailVerified:
+ *                       type: boolean
+ *                     createdAt:
+ *                       type: string
+ *                     updatedAt:
+ *                       type: string
  *                 tokens:
- *                   $ref: '#/components/schemas/AuthTokens'
+ *                   type: object
+ *                   properties:
+ *                     access:
+ *                       type: object
+ *                       properties:
+ *                         token:
+ *                           type: string
+ *                         expires:
+ *                           type: string
+ *                     refresh:
+ *                       type: object
+ *                       properties:
+ *                         token:
+ *                           type: string
+ *                         expires:
+ *                           type: string
  *       "400":
- *         $ref: '#/components/responses/DuplicateEmail'
+ *         description: Invalid input or email already exists
+ *       "422":
+ *         description: Password validation failed
+ *       "500":
+ *         description: Internal server error
  */
 
 /**

@@ -1,5 +1,6 @@
 import prisma from '../client.ts';
-import { Prisma, Role, User } from '../generated/prisma/index.js';
+import { Role } from '../config/constants.ts';
+import { Prisma, User } from '../generated/prisma/index.js';
 import ApiError from '../utils/ApiError.ts';
 import { encryptPassword } from '../utils/encryption.ts';
 import httpStatus from 'http-status';
@@ -9,7 +10,7 @@ import httpStatus from 'http-status';
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
-const createUser = async (email: string, password: string, name?: string, role: Role = Role.USER): Promise<User> => {
+const createUser = async (email: string, password: string, name?: string, role: string = Role.USER): Promise<User> => {
     if (await getUserByEmail(email)) {
         throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
     }
@@ -25,7 +26,7 @@ const createUser = async (email: string, password: string, name?: string, role: 
 
 /**
  * Query for users with pagination
- * @param {Object} filter - Prisma filter
+ * @param {Object} filter - Filter criteria
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
@@ -33,7 +34,7 @@ const createUser = async (email: string, password: string, name?: string, role: 
  * @returns {Promise<QueryResult>}
  */
 const queryUsers = async <Key extends keyof User>(
-    filter: object,
+    filter: { name?: string; role?: string },
     options: {
         limit?: number;
         page?: number;
@@ -53,20 +54,31 @@ const queryUsers = async <Key extends keyof User>(
     const sortBy = options.sortBy;
     const sortType = options.sortType ?? 'desc';
 
+    // Build Prisma where clause
+    const where: Prisma.UserWhereInput = {};
+    if (filter.name) {
+        where.name = {
+            contains: filter.name
+        };
+    }
+    if (filter.role) {
+        where.role = filter.role;
+    }
+
     // Get total count for pagination
     const totalResults = await prisma.user.count({
-        where: filter
+        where
     });
 
     const totalPages = Math.ceil(totalResults / limit);
     const skip = (page - 1) * limit;
 
     const users = await prisma.user.findMany({
-        where: filter,
+        where,
         select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
         skip: skip,
         take: limit,
-        orderBy: sortBy ? { [sortBy]: sortType } : undefined
+        orderBy: sortBy ? { [sortBy]: sortType } : { createdAt: 'desc' }
     });
 
     return {
@@ -125,8 +137,11 @@ const updateUserById = async <Key extends keyof User>(
     if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
-    if (updateBody.email && (await getUserByEmail(updateBody.email as string))) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+    if (updateBody.email && updateBody.email !== user.email) {
+        const existingUser = await getUserByEmail(updateBody.email as string);
+        if (existingUser) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+        }
     }
 
     // Encrypt password if provided

@@ -1,6 +1,7 @@
 import prisma from '../client.ts';
 import config from '../config/config.ts';
-import { Token, TokenType } from '../generated/prisma/index.js';
+import { TokenType } from '../config/constants.ts';
+import { Token } from '../generated/prisma/index.js';
 import { AuthTokensResponse } from '../types/response.ts';
 import ApiError from '../utils/ApiError.ts';
 import userService from './user.service.ts';
@@ -16,7 +17,7 @@ import moment, { Moment } from 'moment';
  * @param {string} [secret]
  * @returns {string}
  */
-const generateToken = (userId: number, expires: Moment, type: TokenType, secret = config.jwt.secret): string => {
+const generateToken = (userId: number, expires: Moment, type: string, secret = config.jwt.secret): string => {
     const payload = {
         sub: userId,
         iat: moment().unix(),
@@ -39,7 +40,7 @@ const saveToken = async (
     token: string,
     userId: number,
     expires: Moment,
-    type: TokenType,
+    type: string,
     blacklisted = false
 ): Promise<Token> => {
     const createdToken = await prisma.token.create({
@@ -60,7 +61,7 @@ const saveToken = async (
  * @param {string} type
  * @returns {Promise<Token>}
  */
-const verifyToken = async (token: string, type: TokenType): Promise<Token> => {
+const verifyToken = async (token: string, type: string): Promise<Token> => {
     const payload = jwt.verify(token, config.jwt.secret);
     const userId = Number(payload.sub);
     const tokenData = await prisma.token.findFirst({
@@ -88,11 +89,11 @@ const generateAuthTokens = async (user: { id: number }): Promise<AuthTokensRespo
     return {
         access: {
             token: accessToken,
-            expires: accessTokenExpires.toDate()
+            expires: accessTokenExpires.toISOString()
         },
         refresh: {
             token: refreshToken,
-            expires: refreshTokenExpires.toDate()
+            expires: refreshTokenExpires.toISOString()
         }
     };
 };

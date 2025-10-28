@@ -6,6 +6,13 @@ import { RegisterPage } from '@/pages/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ComingSoonPage } from '@/pages/ComingSoonPage';
 import { DocumentUploadPage } from '@/pages/DocumentUploadPage';
+import { ClientInfoPage } from '@/pages/onboarding/ClientInfoPage';
+import { RiskAssessmentPage } from '@/pages/onboarding/RiskAssessmentPage';
+import { ObjectivesPage } from '@/pages/onboarding/ObjectivesPage';
+import { AccountSetupPage } from '@/pages/onboarding/AccountSetupPage';
+import { CompliancePage } from '@/pages/onboarding/CompliancePage';
+import { ReviewPage } from '@/pages/onboarding/ReviewPage';
+import { SuccessPage } from '@/pages/onboarding/SuccessPage';
 
 export const App = () => {
     return (
@@ -57,15 +64,43 @@ export const App = () => {
                             }
                         />
                         <Route
+                            path='onboarding/client-info'
+                            element={<ClientInfoPage />}
+                        />
+                        <Route
+                            path='onboarding/risk-assessment'
+                            element={<RiskAssessmentPage />}
+                        />
+                        <Route
+                            path='onboarding/objectives'
+                            element={<ObjectivesPage />}
+                        />
+                        <Route
+                            path='onboarding/account-setup'
+                            element={<AccountSetupPage />}
+                        />
+                        <Route
                             path='onboarding/documents'
                             element={<DocumentUploadPage />}
                         />
                         <Route
-                            path='onboarding/*'
+                            path='onboarding/compliance'
+                            element={<CompliancePage />}
+                        />
+                        <Route
+                            path='onboarding/review'
+                            element={<ReviewPage />}
+                        />
+                        <Route
+                            path='onboarding/success'
+                            element={<SuccessPage />}
+                        />
+                        <Route
+                            path='onboarding'
                             element={
-                                <ComingSoonPage
-                                    title='Client Onboarding'
-                                    description='The client onboarding flow is being developed.'
+                                <Navigate
+                                    to='/onboarding/client-info'
+                                    replace
                                 />
                             }
                         />

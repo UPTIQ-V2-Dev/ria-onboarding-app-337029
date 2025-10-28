@@ -34,7 +34,7 @@ const createClient = async (clientData: Omit<Prisma.ClientCreateInput, 'user'>, 
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
  * @param {number} [options.page] - Current page (default = 1)
- * @returns {Promise<Client[]>}
+ * @returns {Promise<{results: Client[], page: number, limit: number, totalPages: number, totalResults: number}>}
  */
 const queryClients = async <Key extends keyof Client>(
     filter: object,
@@ -59,21 +59,38 @@ const queryClients = async <Key extends keyof Client>(
         'updatedAt',
         'userId'
     ] as Key[]
-): Promise<Pick<Client, Key>[]> => {
+): Promise<{
+    results: Pick<Client, Key>[];
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalResults: number;
+}> => {
     const page = options.page ?? 1;
     const limit = options.limit ?? 10;
     const sortBy = options.sortBy;
     const sortType = options.sortType ?? 'desc';
 
-    const clients = await prisma.client.findMany({
-        where: filter,
-        select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: sortBy ? { [sortBy]: sortType } : { updatedAt: 'desc' }
-    });
+    const [clients, totalResults] = await Promise.all([
+        prisma.client.findMany({
+            where: filter,
+            select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: sortBy ? { [sortBy]: sortType } : { updatedAt: 'desc' }
+        }),
+        prisma.client.count({ where: filter })
+    ]);
 
-    return clients as Pick<Client, Key>[];
+    const totalPages = Math.ceil(totalResults / limit);
+
+    return {
+        results: clients as Pick<Client, Key>[],
+        page,
+        limit,
+        totalPages,
+        totalResults
+    };
 };
 
 /**

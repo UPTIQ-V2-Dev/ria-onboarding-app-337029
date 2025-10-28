@@ -1,4 +1,4 @@
-import { Role } from '../generated/prisma/index.js';
+import { Role } from '../config/constants.ts';
 import { userService } from '../services/index.ts';
 import { MCPTool } from '../types/mcp.ts';
 import pick from '../utils/pick.ts';
@@ -39,7 +39,7 @@ const getUsersTool: MCPTool = {
     description: 'Get all users with optional filters and pagination (admin only)',
     inputSchema: z.object({
         name: z.string().optional(),
-        role: z.string().optional(),
+        role: z.enum([Role.USER, Role.ADMIN]).optional(),
         sortBy: z.string().optional(),
         limit: z.number().int().optional().default(10),
         page: z.number().int().optional().default(1)

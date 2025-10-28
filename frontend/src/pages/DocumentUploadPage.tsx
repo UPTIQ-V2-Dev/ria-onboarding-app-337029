@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FormLayout } from '@/components/layouts/FormLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,11 +9,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Upload, File, CheckCircle, Clock, AlertCircle, X, FileText, TrendingUp } from 'lucide-react';
-import { getDocumentTypes, getClientDocuments, uploadDocument, analyzeBankStatement } from '@/services/document';
-import type { DocumentType, TreasuryRecommendation } from '@/types/document';
-
-const DEMO_CLIENT_ID = '1'; // Using mock client ID for demo
+import { Upload, File, CheckCircle, Clock, AlertCircle, X, FileText } from 'lucide-react';
+import { getDocumentTypes, uploadDocument, getClientDocuments, updateOnboardingStep } from '@/services/onboarding';
+import type { DocumentType } from '@/types/onboarding';
 
 interface FileWithProgress extends File {
     progress?: number;
@@ -21,24 +21,21 @@ interface FileWithProgress extends File {
 
 const statusIcons = {
     pending: Clock,
-    uploaded: Upload,
-    processing: Clock,
-    verified: CheckCircle,
+    approved: CheckCircle,
     rejected: AlertCircle
 };
 
 const statusColors = {
     pending: 'bg-yellow-500',
-    uploaded: 'bg-blue-500',
-    processing: 'bg-orange-500',
-    verified: 'bg-green-500',
+    approved: 'bg-green-500',
     rejected: 'bg-red-500'
 };
 
 export const DocumentUploadPage = () => {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const clientId = searchParams.get('clientId');
     const [selectedFiles, setSelectedFiles] = useState<FileWithProgress[]>([]);
-    const [treasuryRecommendations, setTreasuryRecommendations] = useState<TreasuryRecommendation[]>([]);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: documentTypes = [], isLoading: isLoadingTypes } = useQuery({
@@ -47,43 +44,23 @@ export const DocumentUploadPage = () => {
     });
 
     const { data: clientDocuments = [], isLoading: isLoadingDocuments } = useQuery({
-        queryKey: ['clientDocuments', DEMO_CLIENT_ID],
-        queryFn: () => getClientDocuments(DEMO_CLIENT_ID)
+        queryKey: ['clientDocuments', clientId],
+        queryFn: () => getClientDocuments(clientId!),
+        enabled: !!clientId
     });
 
     const uploadMutation = useMutation({
         mutationFn: async ({ file, documentTypeId }: { file: File; documentTypeId: string }) => {
-            const result = await uploadDocument(
-                {
-                    fileName: file.name,
-                    fileSize: file.size,
-                    fileType: file.type,
-                    documentTypeId,
-                    clientId: DEMO_CLIENT_ID
-                },
-                file
-            );
-
-            // If it's a bank statement, analyze it with Treasury Solution Advisor
-            const isBankStatement = documentTypes.find(dt => dt.id === documentTypeId)?.id === 'bank-statement';
-            if (isBankStatement) {
-                setIsAnalyzing(true);
-                try {
-                    const analysis = await analyzeBankStatement(result.document.id, file);
-                    setTreasuryRecommendations(analysis.recommendations);
-                } catch (error) {
-                    console.error('Failed to analyze bank statement:', error);
-                } finally {
-                    setIsAnalyzing(false);
-                }
-            }
-
-            return result;
+            return await uploadDocument(clientId!, documentTypeId, file);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['clientDocuments'] });
             setSelectedFiles([]);
         }
+    });
+
+    const updateStepMutation = useMutation({
+        mutationFn: updateOnboardingStep
     });
 
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, documentType: DocumentType) => {
@@ -126,83 +103,78 @@ export const DocumentUploadPage = () => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
+    const handleContinue = async () => {
+        if (!clientId) {
+            alert('Client ID is required. Please start from the beginning.');
+            navigate('/onboarding/client-info');
+            return;
+        }
+
+        try {
+            await updateStepMutation.mutateAsync({
+                clientId,
+                step: 5,
+                data: {
+                    uploadedDocuments: clientDocuments
+                }
+            });
+
+            navigate(`/onboarding/compliance?clientId=${clientId}`);
+        } catch (error) {
+            console.error('Error updating onboarding step:', error);
+        }
+    };
+
     if (isLoadingTypes || isLoadingDocuments) {
         return (
-            <div className='flex items-center justify-center h-64'>
-                <div className='text-center'>
-                    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
-                    <p className='text-muted-foreground'>Loading document types...</p>
+            <FormLayout
+                currentStep={5}
+                title='Document Upload'
+                description='Loading document requirements...'
+            >
+                <div className='flex items-center justify-center h-64'>
+                    <div className='text-center'>
+                        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
+                        <p className='text-muted-foreground'>Loading document types...</p>
+                    </div>
                 </div>
-            </div>
+            </FormLayout>
+        );
+    }
+
+    if (!clientId) {
+        return (
+            <FormLayout
+                currentStep={5}
+                title='Document Upload'
+                description='Client ID is required to proceed.'
+            >
+                <Alert variant='destructive'>
+                    <AlertCircle className='h-4 w-4' />
+                    <AlertDescription>
+                        Client ID is missing. Please start the onboarding process from the beginning.
+                    </AlertDescription>
+                </Alert>
+                <div className='flex justify-center mt-6'>
+                    <Button onClick={() => navigate('/onboarding/client-info')}>Start Over</Button>
+                </div>
+            </FormLayout>
         );
     }
 
     return (
-        <div className='space-y-6'>
-            <div>
-                <h1 className='text-3xl font-bold'>Document Upload</h1>
-                <p className='text-muted-foreground mt-2'>
-                    Upload required documents for client onboarding. Bank statements will be automatically analyzed for
-                    treasury product recommendations.
-                </p>
-            </div>
-
-            {treasuryRecommendations.length > 0 && (
-                <Card className='border-green-200 bg-green-50'>
-                    <CardHeader>
-                        <CardTitle className='flex items-center gap-2 text-green-800'>
-                            <TrendingUp className='h-5 w-5' />
-                            Treasury Product Recommendations
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className='space-y-4'>
-                            {treasuryRecommendations.map((recommendation, index) => (
-                                <div
-                                    key={index}
-                                    className='border rounded-lg p-4 bg-white'
-                                >
-                                    <div className='flex items-start justify-between mb-2'>
-                                        <h4 className='font-semibold text-green-900'>{recommendation.product}</h4>
-                                        <Badge
-                                            variant={
-                                                recommendation.priority === 'high'
-                                                    ? 'destructive'
-                                                    : recommendation.priority === 'medium'
-                                                      ? 'default'
-                                                      : 'secondary'
-                                            }
-                                        >
-                                            {recommendation.priority} priority
-                                        </Badge>
-                                    </div>
-                                    <p className='text-sm text-gray-700 mb-2'>{recommendation.description}</p>
-                                    <p className='text-xs text-gray-600'>
-                                        <strong>Reasoning:</strong> {recommendation.reasoning}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {isAnalyzing && (
-                <Alert>
-                    <TrendingUp className='h-4 w-4' />
-                    <AlertDescription>
-                        Analyzing bank statement for treasury product recommendations...
-                    </AlertDescription>
-                </Alert>
-            )}
-
+        <FormLayout
+            currentStep={5}
+            title='Document Upload'
+            description='Upload required documents to verify your identity and funding sources.'
+        >
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 {/* Document Upload Section */}
                 <div className='space-y-4'>
                     <h2 className='text-xl font-semibold'>Upload New Documents</h2>
 
                     {documentTypes.map(documentType => {
-                        const existingDoc = clientDocuments.find(doc => doc.documentType.id === documentType.id);
+                        const existingDoc = clientDocuments.find(doc => doc.documentTypeId === documentType.id);
                         const isUploaded = existingDoc && existingDoc.status !== 'rejected';
 
                         return (
@@ -358,7 +330,10 @@ export const DocumentUploadPage = () => {
                                                 <div className='flex-1 min-w-0'>
                                                     <p className='text-sm font-medium truncate'>{document.fileName}</p>
                                                     <p className='text-xs text-muted-foreground'>
-                                                        {document.documentType.name}
+                                                        {
+                                                            documentTypes.find(dt => dt.id === document.documentTypeId)
+                                                                ?.name
+                                                        }
                                                     </p>
                                                     <p className='text-xs text-muted-foreground'>
                                                         {formatFileSize(document.fileSize)}
@@ -384,6 +359,24 @@ export const DocumentUploadPage = () => {
                     </div>
                 </>
             )}
-        </div>
+
+            {/* Navigation buttons */}
+            <div className='flex justify-between'>
+                <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => navigate(`/onboarding/account-setup?clientId=${clientId}`)}
+                >
+                    Back
+                </Button>
+                <Button
+                    onClick={handleContinue}
+                    className='px-8'
+                    disabled={updateStepMutation.isPending}
+                >
+                    {updateStepMutation.isPending ? 'Saving...' : 'Continue to Compliance'}
+                </Button>
+            </div>
+        </FormLayout>
     );
 };
