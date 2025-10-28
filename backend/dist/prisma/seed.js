@@ -130,7 +130,7 @@ async function main() {
             description: "Government-issued photo ID (driver's license, passport, state ID)",
             required: true,
             category: 'identity',
-            acceptedFormats: ['image/jpeg', 'image/png', 'application/pdf'],
+            acceptedFormats: 'image/jpeg,image/png,application/pdf',
             maxFileSize: 5242880 // 5MB
         },
         {
@@ -139,7 +139,7 @@ async function main() {
             description: 'Utility bill, bank statement, or lease agreement dated within 3 months',
             required: true,
             category: 'identity',
-            acceptedFormats: ['image/jpeg', 'image/png', 'application/pdf'],
+            acceptedFormats: 'image/jpeg,image/png,application/pdf',
             maxFileSize: 5242880 // 5MB
         },
         {
@@ -148,7 +148,7 @@ async function main() {
             description: 'Recent bank statements (last 3 months)',
             required: true,
             category: 'financial',
-            acceptedFormats: ['application/pdf', 'image/jpeg', 'image/png'],
+            acceptedFormats: 'application/pdf,image/jpeg,image/png',
             maxFileSize: 10485760 // 10MB
         },
         {
@@ -157,7 +157,7 @@ async function main() {
             description: 'Most recent tax return or tax transcript',
             required: false,
             category: 'financial',
-            acceptedFormats: ['application/pdf'],
+            acceptedFormats: 'application/pdf',
             maxFileSize: 10485760 // 10MB
         },
         {
@@ -166,7 +166,7 @@ async function main() {
             description: 'Pay stubs, employment letter, or contract',
             required: false,
             category: 'financial',
-            acceptedFormats: ['application/pdf', 'image/jpeg', 'image/png'],
+            acceptedFormats: 'application/pdf,image/jpeg,image/png',
             maxFileSize: 5242880 // 5MB
         },
         {
@@ -175,7 +175,7 @@ async function main() {
             description: 'Statements from other investment accounts',
             required: false,
             category: 'financial',
-            acceptedFormats: ['application/pdf', 'image/jpeg', 'image/png'],
+            acceptedFormats: 'application/pdf,image/jpeg,image/png',
             maxFileSize: 10485760 // 10MB
         },
         {
@@ -184,7 +184,7 @@ async function main() {
             description: 'Completed and signed W-9 tax form',
             required: true,
             category: 'tax',
-            acceptedFormats: ['application/pdf'],
+            acceptedFormats: 'application/pdf',
             maxFileSize: 5242880 // 5MB
         }
     ];

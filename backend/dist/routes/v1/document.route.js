@@ -24,6 +24,9 @@ router
 router
     .route('/documents/:documentId/status')
     .put(auth(), validate(documentValidation.updateDocumentStatus), documentController.updateDocumentStatus);
+router
+    .route('/documents/:documentId/analyze')
+    .post(auth(), validate(documentValidation.analyzeDocument), documentController.analyzeDocument);
 export default router;
 /**
  * @swagger
@@ -411,6 +414,71 @@ export default router;
  *         $ref: '#/components/responses/Forbidden'
  *       "404":
  *         $ref: '#/components/responses/NotFound'
+ *       "500":
+ *         $ref: '#/components/responses/InternalError'
+ */
+/**
+ * @swagger
+ * /documents/{documentId}/analyze:
+ *   post:
+ *     summary: Analyze bank statement document and get treasury recommendations
+ *     description: Analyze a verified bank statement document to generate treasury management recommendations
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Document ID
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 recommendations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       product:
+ *                         type: string
+ *                         description: Treasury product name
+ *                       description:
+ *                         type: string
+ *                         description: Product description
+ *                       reasoning:
+ *                         type: string
+ *                         description: Reasoning for the recommendation
+ *                       priority:
+ *                         type: string
+ *                         enum: [high, medium, low]
+ *                         description: Recommendation priority
+ *             example:
+ *               recommendations:
+ *                 - product: "High-Yield Savings Account"
+ *                   description: "Maximize returns on excess cash with competitive interest rates"
+ *                   reasoning: "Based on your current cash position and liquidity needs, a high-yield savings account would provide better returns while maintaining accessibility"
+ *                   priority: "high"
+ *                 - product: "Short-Term Treasury Bills"
+ *                   description: "Low-risk investment for surplus funds"
+ *                   reasoning: "Your conservative risk profile and short-term liquidity requirements make Treasury Bills an ideal choice"
+ *                   priority: "medium"
+ *       "400":
+ *         $ref: '#/components/responses/BadRequest'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "403":
+ *         $ref: '#/components/responses/Forbidden'
+ *       "404":
+ *         $ref: '#/components/responses/NotFound'
+ *       "422":
+ *         $ref: '#/components/responses/UnprocessableEntity'
  *       "500":
  *         $ref: '#/components/responses/InternalError'
  */

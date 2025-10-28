@@ -138,6 +138,28 @@ const queryDocuments = catchAsyncWithAuth(async (req, res) => {
     res.send(result);
 });
 
+const analyzeDocument = catchAsyncWithAuth(async (req, res) => {
+    const { documentId } = req.params;
+    const requestingUser = req.user;
+
+    const document = await documentService.getDocumentById(documentId);
+    if (!document) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'Document not found');
+    }
+
+    // Check if user has access to this document
+    // Users can only analyze documents for their own clients, admins can analyze all
+    if (requestingUser.role !== Role.ADMIN) {
+        const client = await clientService.getClientById(document.clientId);
+        if (!client || client.userId !== requestingUser.id) {
+            throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - cannot analyze document');
+        }
+    }
+
+    const result = await documentService.analyzeDocument(documentId);
+    res.send(result);
+});
+
 export default {
     getDocumentTypes,
     getClientDocuments,
@@ -145,5 +167,6 @@ export default {
     getDocument,
     updateDocumentStatus,
     deleteDocument,
-    queryDocuments
+    queryDocuments,
+    analyzeDocument
 };

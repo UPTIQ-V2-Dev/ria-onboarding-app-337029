@@ -9,7 +9,7 @@ const documentTypeSchema = z.object({
     description: z.string(),
     required: z.boolean(),
     category: z.string(),
-    acceptedFormats: z.array(z.string()),
+    acceptedFormats: z.string(),
     maxFileSize: z.number()
 });
 
@@ -220,6 +220,28 @@ const markDocumentUploadedTool: MCPTool = {
     }
 };
 
+const analyzeDocumentTool: MCPTool = {
+    id: 'document_analyze',
+    name: 'Analyze Document',
+    description: 'Analyze bank statement document and get treasury recommendations',
+    inputSchema: z.object({
+        documentId: z.string()
+    }),
+    outputSchema: z.object({
+        recommendations: z.array(
+            z.object({
+                product: z.string(),
+                description: z.string(),
+                reasoning: z.string(),
+                priority: z.enum(['high', 'medium', 'low'])
+            })
+        )
+    }),
+    fn: async (inputs: { documentId: string }) => {
+        return await documentService.analyzeDocument(inputs.documentId);
+    }
+};
+
 export const documentTools: MCPTool[] = [
     getDocumentTypesTool,
     getDocumentTypeTool,
@@ -229,5 +251,6 @@ export const documentTools: MCPTool[] = [
     queryDocumentsTool,
     updateDocumentStatusTool,
     deleteDocumentTool,
-    markDocumentUploadedTool
+    markDocumentUploadedTool,
+    analyzeDocumentTool
 ];

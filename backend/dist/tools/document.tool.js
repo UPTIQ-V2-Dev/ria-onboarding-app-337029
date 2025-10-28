@@ -7,7 +7,7 @@ const documentTypeSchema = z.object({
     description: z.string(),
     required: z.boolean(),
     category: z.string(),
-    acceptedFormats: z.array(z.string()),
+    acceptedFormats: z.string(),
     maxFileSize: z.number()
 });
 const documentSchema = z.object({
@@ -194,6 +194,25 @@ const markDocumentUploadedTool = {
         return await documentService.markDocumentAsUploaded(inputs.documentId);
     }
 };
+const analyzeDocumentTool = {
+    id: 'document_analyze',
+    name: 'Analyze Document',
+    description: 'Analyze bank statement document and get treasury recommendations',
+    inputSchema: z.object({
+        documentId: z.string()
+    }),
+    outputSchema: z.object({
+        recommendations: z.array(z.object({
+            product: z.string(),
+            description: z.string(),
+            reasoning: z.string(),
+            priority: z.enum(['high', 'medium', 'low'])
+        }))
+    }),
+    fn: async (inputs) => {
+        return await documentService.analyzeDocument(inputs.documentId);
+    }
+};
 export const documentTools = [
     getDocumentTypesTool,
     getDocumentTypeTool,
@@ -203,5 +222,6 @@ export const documentTools = [
     queryDocumentsTool,
     updateDocumentStatusTool,
     deleteDocumentTool,
-    markDocumentUploadedTool
+    markDocumentUploadedTool,
+    analyzeDocumentTool
 ];

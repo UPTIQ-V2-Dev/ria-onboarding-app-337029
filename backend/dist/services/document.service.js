@@ -41,7 +41,7 @@ const createDocument = async (documentData) => {
     }
     // Validate file type
     if (!isFileTypeSupported(documentData.fileType, documentType.acceptedFormats)) {
-        throw new ApiError(httpStatus.BAD_REQUEST, `File type ${documentData.fileType} is not supported for ${documentType.name}. Accepted formats: ${documentType.acceptedFormats.join(', ')}`);
+        throw new ApiError(httpStatus.BAD_REQUEST, `File type ${documentData.fileType} is not supported for ${documentType.name}. Accepted formats: ${documentType.acceptedFormats.replace(/,/g, ', ')}`);
     }
     // Validate file size
     if (!isFileSizeAcceptable(documentData.fileSize, documentType.maxFileSize)) {
@@ -215,6 +215,63 @@ const deleteDocumentById = async (documentId) => {
 const markDocumentAsUploaded = async (documentId) => {
     return await updateDocumentStatus(documentId, { status: 'uploaded' });
 };
+/**
+ * Analyze bank statement document and get treasury recommendations
+ * @param {string} documentId
+ * @returns {Promise<{recommendations: {product: string, description: string, reasoning: string, priority: string}[]}>}
+ */
+const analyzeDocument = async (documentId) => {
+    const document = await getDocumentById(documentId);
+    if (!document) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'Document not found');
+    }
+    // Check if document is verified
+    if (document.status !== 'verified') {
+        throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Document must be verified before analysis');
+    }
+    // Check if document is a bank statement (based on document type or file name)
+    const isBankStatement = document.documentType.category === 'financial' ||
+        document.documentType.name.toLowerCase().includes('bank') ||
+        document.fileName.toLowerCase().includes('bank') ||
+        document.fileName.toLowerCase().includes('statement');
+    if (!isBankStatement) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Document not suitable for analysis - must be a bank statement');
+    }
+    // Mock treasury analysis - in a real implementation this would integrate with document analysis services
+    // Return sample recommendations based on the document type and mock financial analysis
+    const recommendations = [
+        {
+            product: 'High-Yield Savings Account',
+            description: 'Maximize returns on excess cash with competitive interest rates',
+            reasoning: 'Based on your current cash position and liquidity needs, a high-yield savings account would provide better returns while maintaining accessibility',
+            priority: 'high'
+        },
+        {
+            product: 'Short-Term Treasury Bills',
+            description: 'Low-risk investment for surplus funds',
+            reasoning: 'Your conservative risk profile and short-term liquidity requirements make Treasury Bills an ideal choice',
+            priority: 'medium'
+        },
+        {
+            product: 'Certificate of Deposit (CD)',
+            description: 'Fixed-term investment with guaranteed returns',
+            reasoning: 'Analysis shows stable cash flows that could benefit from fixed-rate investments with higher yields than savings accounts',
+            priority: 'medium'
+        },
+        {
+            product: 'Money Market Fund',
+            description: 'Diversified short-term investment with better liquidity than CDs',
+            reasoning: 'Your transaction patterns indicate a need for both yield and liquidity, making money market funds suitable',
+            priority: 'low'
+        }
+    ];
+    // In a real implementation, you would:
+    // 1. Extract text/data from the document using OCR/document parsing
+    // 2. Analyze cash flows, account balances, transaction patterns
+    // 3. Apply treasury management algorithms
+    // 4. Generate personalized recommendations based on client's financial profile
+    return { recommendations };
+};
 export default {
     getDocumentTypes,
     getDocumentTypeById,
@@ -224,5 +281,6 @@ export default {
     getDocumentsByClientId,
     updateDocumentStatus,
     deleteDocumentById,
-    markDocumentAsUploaded
+    markDocumentAsUploaded,
+    analyzeDocument
 };

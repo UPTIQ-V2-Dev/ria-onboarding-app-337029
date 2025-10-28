@@ -29,11 +29,12 @@ export const generateDownloadSignedUrl = async (documentId, fileName) => {
 /**
  * Check if file type is supported
  * @param {string} fileType - MIME type of the file
- * @param {string[]} acceptedFormats - Array of accepted MIME types
+ * @param {string} acceptedFormats - Comma-separated string of accepted MIME types
  * @returns {boolean} Whether the file type is supported
  */
 export const isFileTypeSupported = (fileType, acceptedFormats) => {
-    return acceptedFormats.includes(fileType);
+    const acceptedFormatsArray = acceptedFormats.split(',').map(format => format.trim());
+    return acceptedFormatsArray.includes(fileType);
 };
 /**
  * Check if file size is within limits

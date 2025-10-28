@@ -86,9 +86,6 @@ Prisma.NullTypes = {
  * Enums
  */
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
-  ReadUncommitted: 'ReadUncommitted',
-  ReadCommitted: 'ReadCommitted',
-  RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
 });
 
@@ -167,11 +164,6 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.QueryMode = {
-  default: 'default',
-  insensitive: 'insensitive'
-};
-
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
@@ -234,8 +226,7 @@ const config = {
   "datasourceNames": [
     "db"
   ],
-  "activeProvider": "postgresql",
-  "postinstall": false,
+  "activeProvider": "sqlite",
   "inlineDatasources": {
     "db": {
       "url": {
@@ -244,8 +235,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id              Int      @id @default(autoincrement())\n  email           String   @unique\n  name            String?\n  password        String\n  role            Role     @default(USER)\n  isEmailVerified Boolean  @default(false)\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  tokens          Token[]\n  clients         Client[]\n}\n\nmodel Token {\n  id          Int       @id @default(autoincrement())\n  token       String\n  type        TokenType\n  expires     DateTime\n  blacklisted Boolean\n  createdAt   DateTime  @default(now())\n  user        User      @relation(fields: [userId], references: [id])\n  userId      Int\n}\n\nenum Role {\n  USER\n  ADMIN\n}\n\nenum TokenType {\n  ACCESS\n  REFRESH\n  RESET_PASSWORD\n  VERIFY_EMAIL\n}\n\nmodel Client {\n  id           String   @id @default(cuid())\n  firstName    String\n  lastName     String\n  email        String   @unique\n  phone        String\n  status       String   @default(\"pending\")\n  progress     Int      @default(0)\n  riskProfile  String?\n  accountValue Float?\n  firmId       String\n  createdAt    DateTime @default(now())\n  updatedAt    DateTime @updatedAt\n  user         User     @relation(fields: [userId], references: [id])\n  userId       Int\n}\n\nmodel Activity {\n  id          String   @id @default(cuid())\n  type        String\n  clientName  String\n  description String\n  timestamp   DateTime @default(now())\n  clientId    String?\n}\n\nmodel DocumentType {\n  id              String     @id @default(cuid())\n  name            String     @unique\n  description     String\n  required        Boolean    @default(true)\n  category        String\n  acceptedFormats String[]\n  maxFileSize     Int\n  documents       Document[]\n}\n\nmodel Document {\n  id              String       @id @default(cuid())\n  fileName        String\n  fileSize        Int\n  fileType        String\n  documentTypeId  String\n  clientId        String\n  status          String       @default(\"pending\")\n  signedUrl       String?\n  uploadedAt      DateTime     @default(now())\n  verifiedAt      DateTime?\n  rejectionReason String?\n  documentType    DocumentType @relation(fields: [documentTypeId], references: [id])\n}\n",
-  "inlineSchemaHash": "04e087115130e43e447cc19c48d2b4457da795be1b374422048c587734909817",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id              Int      @id @default(autoincrement())\n  email           String   @unique\n  name            String?\n  password        String\n  role            Role     @default(USER)\n  isEmailVerified Boolean  @default(false)\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  tokens          Token[]\n  clients         Client[]\n}\n\nmodel Token {\n  id          Int       @id @default(autoincrement())\n  token       String\n  type        TokenType\n  expires     DateTime\n  blacklisted Boolean\n  createdAt   DateTime  @default(now())\n  user        User      @relation(fields: [userId], references: [id])\n  userId      Int\n}\n\nenum Role {\n  USER\n  ADMIN\n}\n\nenum TokenType {\n  ACCESS\n  REFRESH\n  RESET_PASSWORD\n  VERIFY_EMAIL\n}\n\nmodel Client {\n  id           String   @id @default(cuid())\n  firstName    String\n  lastName     String\n  email        String   @unique\n  phone        String\n  status       String   @default(\"pending\")\n  progress     Int      @default(0)\n  riskProfile  String?\n  accountValue Float?\n  firmId       String\n  createdAt    DateTime @default(now())\n  updatedAt    DateTime @updatedAt\n  user         User     @relation(fields: [userId], references: [id])\n  userId       Int\n}\n\nmodel Activity {\n  id          String   @id @default(cuid())\n  type        String\n  clientName  String\n  description String\n  timestamp   DateTime @default(now())\n  clientId    String?\n}\n\nmodel DocumentType {\n  id              String     @id @default(cuid())\n  name            String     @unique\n  description     String\n  required        Boolean    @default(true)\n  category        String\n  acceptedFormats String\n  maxFileSize     Int\n  documents       Document[]\n}\n\nmodel Document {\n  id              String       @id @default(cuid())\n  fileName        String\n  fileSize        Int\n  fileType        String\n  documentTypeId  String\n  clientId        String\n  status          String       @default(\"pending\")\n  signedUrl       String?\n  uploadedAt      DateTime     @default(now())\n  verifiedAt      DateTime?\n  rejectionReason String?\n  documentType    DocumentType @relation(fields: [documentTypeId], references: [id])\n}\n",
+  "inlineSchemaHash": "2f2c3c7fda693e904580e096a417f4414bba03f018e0e66e7c8a26878730f711",
   "copyEngine": true
 }
 config.dirname = '/'

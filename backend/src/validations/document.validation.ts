@@ -57,6 +57,12 @@ const queryDocuments = {
     })
 };
 
+const analyzeDocument = {
+    params: Joi.object().keys({
+        documentId: Joi.string().required()
+    })
+};
+
 export default {
     getDocumentTypes,
     getClientDocuments,
@@ -64,5 +70,6 @@ export default {
     getDocument,
     updateDocumentStatus,
     deleteDocument,
-    queryDocuments
+    queryDocuments,
+    analyzeDocument
 };

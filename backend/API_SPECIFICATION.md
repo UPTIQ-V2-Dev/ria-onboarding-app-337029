@@ -232,6 +232,26 @@ EX_RES_200: [{"status":"pending","count":23,"percentage":14.7},{"status":"in_pro
 
 ## Client Management Endpoints
 
+EP: POST /clients
+DESC: Create a new client record.
+IN: headers:{Authorization:str!}, body:{firstName:str!, lastName:str!, email:str!, phone:str!, firmId:str!, status:str?, progress:int?, riskProfile:str?, accountValue:float?}
+OUT: 201:{id:str, firstName:str, lastName:str, email:str, phone:str, status:str, createdAt:str, updatedAt:str, progress:int, riskProfile:str?, accountValue:float?, firmId:str}
+ERR: {"400":"Invalid input or email already exists", "401":"Unauthorized", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X POST /clients -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"firstName":"John","lastName":"Smith","email":"john.smith@email.com","phone":"+1-555-0456","firmId":"firm-1"}'
+EX_RES_201: {"id":"client-789","firstName":"John","lastName":"Smith","email":"john.smith@email.com","phone":"+1-555-0456","status":"pending","createdAt":"2024-10-28T15:00:00Z","updatedAt":"2024-10-28T15:00:00Z","progress":0,"firmId":"firm-1"}
+
+---
+
+EP: GET /clients
+DESC: Get all clients with pagination and filtering.
+IN: headers:{Authorization:str!}, query:{firstName:str?, lastName:str?, email:str?, status:str?, riskProfile:str?, firmId:str?, sortBy:str?, sortType:str?, limit:int?, page:int?}
+OUT: 200:{results:arr[obj{id:str, firstName:str, lastName:str, email:str, phone:str, status:str, createdAt:str, updatedAt:str, progress:int, riskProfile:str?, accountValue:float?, firmId:str}], page:int, limit:int, totalPages:int, totalResults:int}
+ERR: {"401":"Unauthorized", "500":"Internal server error"}
+EX_REQ: curl -X GET '/clients?page=1&limit=10&status=pending' -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: {"results":[{"id":"client-789","firstName":"John","lastName":"Smith","email":"john.smith@email.com","phone":"+1-555-0456","status":"pending","createdAt":"2024-10-28T15:00:00Z","updatedAt":"2024-10-28T15:00:00Z","progress":0,"firmId":"firm-1"}],"page":1,"limit":10,"totalPages":1,"totalResults":1}
+
+---
+
 EP: GET /clients/recent
 DESC: Get recently created or updated clients.
 IN: headers:{Authorization:str!}
@@ -239,6 +259,86 @@ OUT: 200:arr[obj{id:str, firstName:str, lastName:str, email:str, phone:str, stat
 ERR: {"401":"Unauthorized", "500":"Internal server error"}
 EX_REQ: curl -X GET /clients/recent -H "Authorization: Bearer eyJhbGc.."
 EX_RES_200: [{"id":"1","firstName":"Sarah","lastName":"Johnson","email":"sarah.johnson@email.com","phone":"+1-555-0123","status":"in_progress","createdAt":"2024-10-28T14:30:00Z","updatedAt":"2024-10-28T14:30:00Z","progress":65,"riskProfile":"moderate","firmId":"firm-1"}]
+
+---
+
+EP: GET /clients/{clientId}
+DESC: Get specific client by ID.
+IN: headers:{Authorization:str!}, params:{clientId:str!}
+OUT: 200:{id:str, firstName:str, lastName:str, email:str, phone:str, status:str, createdAt:str, updatedAt:str, progress:int, riskProfile:str?, accountValue:float?, firmId:str}
+ERR: {"401":"Unauthorized", "404":"Client not found", "403":"Forbidden - cannot access client", "500":"Internal server error"}
+EX_REQ: curl -X GET /clients/client-789 -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: {"id":"client-789","firstName":"John","lastName":"Smith","email":"john.smith@email.com","phone":"+1-555-0456","status":"pending","createdAt":"2024-10-28T15:00:00Z","updatedAt":"2024-10-28T15:00:00Z","progress":0,"firmId":"firm-1"}
+
+---
+
+EP: PATCH /clients/{clientId}
+DESC: Update client information.
+IN: headers:{Authorization:str!}, params:{clientId:str!}, body:{firstName:str?, lastName:str?, email:str?, phone:str?, status:str?, progress:int?, riskProfile:str?, accountValue:float?, firmId:str?}
+OUT: 200:{id:str, firstName:str, lastName:str, email:str, phone:str, status:str, createdAt:str, updatedAt:str, progress:int, riskProfile:str?, accountValue:float?, firmId:str}
+ERR: {"400":"Invalid input or email already exists", "401":"Unauthorized", "404":"Client not found", "403":"Forbidden - cannot update client", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X PATCH /clients/client-789 -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"status":"in_progress","progress":25}'
+EX_RES_200: {"id":"client-789","firstName":"John","lastName":"Smith","email":"john.smith@email.com","phone":"+1-555-0456","status":"in_progress","createdAt":"2024-10-28T15:00:00Z","updatedAt":"2024-10-28T15:30:00Z","progress":25,"firmId":"firm-1"}
+
+---
+
+EP: DELETE /clients/{clientId}
+DESC: Delete a client.
+IN: headers:{Authorization:str!}, params:{clientId:str!}
+OUT: 204:{}
+ERR: {"401":"Unauthorized", "404":"Client not found", "403":"Forbidden - cannot delete client", "500":"Internal server error"}
+EX_REQ: curl -X DELETE /clients/client-789 -H "Authorization: Bearer eyJhbGc.."
+EX_RES_204: {}
+
+## Activity Management Endpoints
+
+EP: POST /activities
+DESC: Create a new activity record.
+IN: headers:{Authorization:str!}, body:{type:str!, clientName:str!, description:str!, clientId:str?}
+OUT: 201:{id:str, type:str, clientName:str, description:str, timestamp:str, clientId:str?}
+ERR: {"400":"Invalid input", "401":"Unauthorized", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X POST /activities -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"type":"client_registered","clientName":"John Smith","description":"New client registration completed","clientId":"client-789"}'
+EX_RES_201: {"id":"activity-123","type":"client_registered","clientName":"John Smith","description":"New client registration completed","timestamp":"2024-10-28T15:00:00Z","clientId":"client-789"}
+
+---
+
+EP: GET /activities
+DESC: Get all activities with filtering and pagination.
+IN: headers:{Authorization:str!}, query:{type:str?, clientName:str?, clientId:str?, sortBy:str?, limit:int?, page:int?}
+OUT: 200:{results:arr[obj{id:str, type:str, clientName:str, description:str, timestamp:str, clientId:str?}], page:int, limit:int, totalPages:int, totalResults:int}
+ERR: {"401":"Unauthorized", "500":"Internal server error"}
+EX_REQ: curl -X GET '/activities?page=1&limit=10&type=client_registered' -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: {"results":[{"id":"activity-123","type":"client_registered","clientName":"John Smith","description":"New client registration completed","timestamp":"2024-10-28T15:00:00Z","clientId":"client-789"}],"page":1,"limit":10,"totalPages":1,"totalResults":1}
+
+---
+
+EP: GET /activities/{activityId}
+DESC: Get specific activity by ID.
+IN: headers:{Authorization:str!}, params:{activityId:str!}
+OUT: 200:{id:str, type:str, clientName:str, description:str, timestamp:str, clientId:str?}
+ERR: {"401":"Unauthorized", "404":"Activity not found", "500":"Internal server error"}
+EX_REQ: curl -X GET /activities/activity-123 -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: {"id":"activity-123","type":"client_registered","clientName":"John Smith","description":"New client registration completed","timestamp":"2024-10-28T15:00:00Z","clientId":"client-789"}
+
+---
+
+EP: PATCH /activities/{activityId}
+DESC: Update activity information.
+IN: headers:{Authorization:str!}, params:{activityId:str!}, body:{type:str?, clientName:str?, description:str?, clientId:str?}
+OUT: 200:{id:str, type:str, clientName:str, description:str, timestamp:str, clientId:str?}
+ERR: {"400":"Invalid input", "401":"Unauthorized", "404":"Activity not found", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X PATCH /activities/activity-123 -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"description":"Client registration completed with verification"}'
+EX_RES_200: {"id":"activity-123","type":"client_registered","clientName":"John Smith","description":"Client registration completed with verification","timestamp":"2024-10-28T15:00:00Z","clientId":"client-789"}
+
+---
+
+EP: DELETE /activities/{activityId}
+DESC: Delete an activity.
+IN: headers:{Authorization:str!}, params:{activityId:str!}
+OUT: 204:{}
+ERR: {"401":"Unauthorized", "404":"Activity not found", "500":"Internal server error"}
+EX_REQ: curl -X DELETE /activities/activity-123 -H "Authorization: Bearer eyJhbGc.."
+EX_RES_204: {}
 
 ## MCP Endpoints
 
@@ -319,3 +419,13 @@ OUT: 200:{id:str, fileName:str, fileSize:int, fileType:str, documentType:obj{id:
 ERR: {"400":"Invalid status or missing rejection reason", "401":"Unauthorized", "404":"Document not found", "403":"Forbidden - insufficient permissions", "500":"Internal server error"}
 EX_REQ: curl -X PUT /documents/doc-456/status -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"status":"verified"}'
 EX_RES_200: {"id":"doc-456","fileName":"bank_statement.pdf","fileSize":1048576,"fileType":"application/pdf","documentType":{"id":"bank-statement","name":"Bank Statement","description":"Recent bank statements","required":true,"category":"financial","acceptedFormats":["application/pdf","image/jpeg","image/png"],"maxFileSize":10485760},"clientId":"client123","status":"verified","signedUrl":"https://storage.example.com/view-url","uploadedAt":"2024-10-28T10:00:00Z","verifiedAt":"2024-10-28T11:00:00Z"}
+
+---
+
+EP: POST /documents/{documentId}/analyze
+DESC: Analyze bank statement document and get treasury recommendations.
+IN: headers:{Authorization:str!}, params:{documentId:str!}
+OUT: 200:{recommendations:arr[obj{product:str, description:str, reasoning:str, priority:str}]}
+ERR: {"400":"Document not suitable for analysis", "401":"Unauthorized", "404":"Document not found", "403":"Forbidden - cannot analyze document", "422":"Document not verified or analysis failed", "500":"Internal server error"}
+EX_REQ: curl -X POST /documents/doc-456/analyze -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: {"recommendations":[{"product":"High-Yield Savings Account","description":"Maximize returns on excess cash with competitive interest rates","reasoning":"Based on your current cash position and liquidity needs, a high-yield savings account would provide better returns while maintaining accessibility","priority":"high"},{"product":"Short-Term Treasury Bills","description":"Low-risk investment for surplus funds","reasoning":"Your conservative risk profile and short-term liquidity requirements make Treasury Bills an ideal choice","priority":"medium"}]}

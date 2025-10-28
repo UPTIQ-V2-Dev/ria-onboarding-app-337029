@@ -49,6 +49,11 @@ const queryDocuments = {
         page: Joi.number().integer().min(1)
     })
 };
+const analyzeDocument = {
+    params: Joi.object().keys({
+        documentId: Joi.string().required()
+    })
+};
 export default {
     getDocumentTypes,
     getClientDocuments,
@@ -56,5 +61,6 @@ export default {
     getDocument,
     updateDocumentStatus,
     deleteDocument,
-    queryDocuments
+    queryDocuments,
+    analyzeDocument
 };
