@@ -1,5 +1,8 @@
 import config from '../../config/config.ts';
+import activityRoute from './activity.route.ts';
 import authRoute from './auth.route.ts';
+import clientRoute from './client.route.ts';
+import dashboardRoute from './dashboard.route.ts';
 import docsRoute from './docs.route.ts';
 import mcpRoute from './mcp.route.ts';
 import userRoute from './user.route.ts';
@@ -15,6 +18,18 @@ const defaultRoutes = [
     {
         path: '/users',
         route: userRoute
+    },
+    {
+        path: '/clients',
+        route: clientRoute
+    },
+    {
+        path: '/dashboard',
+        route: dashboardRoute
+    },
+    {
+        path: '/activities',
+        route: activityRoute
     },
     {
         path: '/mcp',
