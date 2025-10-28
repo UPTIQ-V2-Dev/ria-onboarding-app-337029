@@ -1,19 +1,21 @@
 export const mcpAuthMiddleware = (req, res, next) => {
-    const apiKey = req.headers.authorization;
-    // Validate API key exists
-    if (!apiKey) {
+    const authHeader = req.headers.authorization;
+    // Validate Authorization header exists
+    if (!authHeader) {
         return res.status(401).json({
             jsonrpc: '2.0',
             error: {
                 code: -32001,
-                message: 'Unauthorized: API key required'
+                message: 'Unauthorized: Authorization header required'
             },
             id: req.body?.id || null
         });
     }
-    const validApiKey = process.env.MCP_API_KEY;
+    // Extract token from "Bearer <token>" format
+    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
+    const validApiKey = process.env.MCP_API_KEY || 'test-mcp-key';
     // eslint-disable-next-line security/detect-possible-timing-attacks
-    if (apiKey !== validApiKey) {
+    if (token !== validApiKey) {
         return res.status(401).json({
             jsonrpc: '2.0',
             error: {

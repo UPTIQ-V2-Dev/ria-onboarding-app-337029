@@ -23,7 +23,7 @@ model User {
   isEmailVerified Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  Token           Token[]
+  tokens          Token[]
   clients         Client[]
 }
 
@@ -74,4 +74,30 @@ model Activity {
   description String
   timestamp   DateTime @default(now())
   clientId    String?
+}
+
+model DocumentType {
+  id              String     @id @default(cuid())
+  name            String     @unique
+  description     String
+  required        Boolean    @default(true)
+  category        String
+  acceptedFormats String[]
+  maxFileSize     Int
+  documents       Document[]
+}
+
+model Document {
+  id              String       @id @default(cuid())
+  fileName        String
+  fileSize        Int
+  fileType        String
+  documentTypeId  String
+  clientId        String
+  status          String       @default("pending")
+  signedUrl       String?
+  uploadedAt      DateTime     @default(now())
+  verifiedAt      DateTime?
+  rejectionReason String?
+  documentType    DocumentType @relation(fields: [documentTypeId], references: [id])
 }

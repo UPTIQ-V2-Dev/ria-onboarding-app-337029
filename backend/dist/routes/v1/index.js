@@ -4,6 +4,7 @@ import authRoute from "./auth.route.js";
 import clientRoute from "./client.route.js";
 import dashboardRoute from "./dashboard.route.js";
 import docsRoute from "./docs.route.js";
+import documentRoute from "./document.route.js";
 import mcpRoute from "./mcp.route.js";
 import userRoute from "./user.route.js";
 import express from 'express';
@@ -32,6 +33,10 @@ const defaultRoutes = [
     {
         path: '/mcp',
         route: mcpRoute
+    },
+    {
+        path: '/',
+        route: documentRoute
     }
 ];
 const devRoutes = [

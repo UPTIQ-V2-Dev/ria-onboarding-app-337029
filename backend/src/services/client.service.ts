@@ -199,6 +199,18 @@ const updateClientById = async <Key extends keyof Client>(
 };
 
 /**
+ * Get clients by user ID
+ * @param {number} userId
+ * @returns {Promise<Client[]>}
+ */
+const getClientsByUserId = async (userId: number): Promise<Client[]> => {
+    return await prisma.client.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+    });
+};
+
+/**
  * Delete client by id
  * @param {string} clientId
  * @returns {Promise<Client>}
@@ -219,6 +231,7 @@ export default {
     getRecentClients,
     getClientById,
     getClientByEmail,
+    getClientsByUserId,
     updateClientById,
     deleteClientById
 };

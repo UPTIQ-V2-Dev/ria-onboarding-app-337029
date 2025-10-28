@@ -3,3 +3,5 @@ export { default as userController } from './user.controller.ts';
 export { default as clientController } from './client.controller.ts';
 export { default as dashboardController } from './dashboard.controller.ts';
 export { default as activityController } from './activity.controller.ts';
+export { default as documentController } from './document.controller.ts';
+export { mcpPostController, mcpGetController, mcpDeleteController } from './mcp.controller.ts';

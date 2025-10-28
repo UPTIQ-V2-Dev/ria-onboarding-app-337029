@@ -21,7 +21,7 @@ const clientStatusCountSchema = z.object({
     percentage: z.number()
 });
 const getDashboardStatsTool = {
-    id: 'dashboard_get_stats',
+    id: 'dashboard_stats',
     name: 'Get Dashboard Statistics',
     description: 'Get comprehensive dashboard statistics including client counts, completion metrics, and recent activity',
     inputSchema: z.object({}), // No input parameters required
@@ -38,16 +38,16 @@ const getDashboardStatsTool = {
     }
 };
 const getClientStatusCountsTool = {
-    id: 'dashboard_get_client_status_counts',
+    id: 'dashboard_client_status_counts',
     name: 'Get Client Status Distribution',
     description: 'Get the distribution of clients by their status with counts and percentages',
     inputSchema: z.object({}), // No input parameters required
     outputSchema: z.object({
-        statusCounts: z.array(clientStatusCountSchema)
+        data: z.array(clientStatusCountSchema)
     }),
     fn: async () => {
         const statusCounts = await dashboardService.getClientStatusCounts();
-        return { statusCounts };
+        return { data: statusCounts };
     }
 };
 export const dashboardTools = [getDashboardStatsTool, getClientStatusCountsTool];

@@ -52,6 +52,32 @@ model Activity {
   timestamp   DateTime @default(now())
   clientId    String?
 }
+
+model Document {
+  id              String      @id @default(cuid())
+  fileName        String
+  fileSize        Int
+  fileType        String
+  documentTypeId  String
+  clientId        String
+  status          String      @default("pending")
+  signedUrl       String?
+  uploadedAt      DateTime    @default(now())
+  verifiedAt      DateTime?
+  rejectionReason String?
+  documentType    DocumentType @relation(fields: [documentTypeId], references: [id])
+}
+
+model DocumentType {
+  id              String     @id @default(cuid())
+  name            String     @unique
+  description     String
+  required        Boolean    @default(true)
+  category        String
+  acceptedFormats String[]
+  maxFileSize     Int
+  documents       Document[]
+}
 ```
 
 ## Authentication Endpoints
@@ -243,3 +269,53 @@ OUT: 200:obj
 ERR: {"401":"Unauthorized", "500":"Internal server error"}
 EX_REQ: curl -X DELETE /mcp -H "Authorization: Bearer eyJhbGc.."
 EX_RES_200: {}
+
+## Document Management Endpoints
+
+EP: GET /document-types
+DESC: Get all available document types for client onboarding.
+IN: headers:{Authorization:str!}
+OUT: 200:arr[obj{id:str, name:str, description:str, required:bool, category:str, acceptedFormats:arr[str], maxFileSize:int}]
+ERR: {"401":"Unauthorized", "500":"Internal server error"}
+EX_REQ: curl -X GET /document-types -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: [{"id":"id-verification","name":"ID Verification","description":"Government-issued photo ID","required":true,"category":"identity","acceptedFormats":["image/jpeg","image/png","application/pdf"],"maxFileSize":5242880}]
+
+---
+
+EP: GET /clients/{clientId}/documents
+DESC: Get all documents for a specific client.
+IN: headers:{Authorization:str!}, params:{clientId:str!}
+OUT: 200:arr[obj{id:str, fileName:str, fileSize:int, fileType:str, documentType:obj{id:str, name:str, description:str, required:bool, category:str, acceptedFormats:arr[str], maxFileSize:int}, clientId:str, status:str, signedUrl:str?, uploadedAt:str, verifiedAt:str?, rejectionReason:str?}]
+ERR: {"401":"Unauthorized", "404":"Client not found", "500":"Internal server error"}
+EX_REQ: curl -X GET /clients/client123/documents -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: [{"id":"doc-1","fileName":"drivers_license.pdf","fileSize":2048000,"fileType":"application/pdf","documentType":{"id":"id-verification","name":"ID Verification","description":"Government-issued photo ID","required":true,"category":"identity","acceptedFormats":["image/jpeg","image/png","application/pdf"],"maxFileSize":5242880},"clientId":"client123","status":"verified","signedUrl":"https://example.com/signed-url/doc-1","uploadedAt":"2024-10-28T10:00:00Z","verifiedAt":"2024-10-28T11:00:00Z"}]
+
+---
+
+EP: POST /documents
+DESC: Create a new document and get signed URL for file upload.
+IN: headers:{Authorization:str!}, body:{fileName:str!, fileSize:int!, fileType:str!, documentTypeId:str!, clientId:str!}
+OUT: 201:{document:obj{id:str, fileName:str, fileSize:int, fileType:str, documentType:obj{id:str, name:str, description:str, required:bool, category:str, acceptedFormats:arr[str], maxFileSize:int}, clientId:str, status:str, signedUrl:str?, uploadedAt:str, verifiedAt:str?, rejectionReason:str?}, signedUrl:str}
+ERR: {"400":"Invalid input or unsupported file type", "401":"Unauthorized", "404":"Document type or client not found", "413":"File too large", "500":"Internal server error"}
+EX_REQ: curl -X POST /documents -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"fileName":"bank_statement.pdf","fileSize":1048576,"fileType":"application/pdf","documentTypeId":"bank-statement","clientId":"client123"}'
+EX_RES_201: {"document":{"id":"doc-456","fileName":"bank_statement.pdf","fileSize":1048576,"fileType":"application/pdf","documentType":{"id":"bank-statement","name":"Bank Statement","description":"Recent bank statements","required":true,"category":"financial","acceptedFormats":["application/pdf","image/jpeg","image/png"],"maxFileSize":10485760},"clientId":"client123","status":"pending","uploadedAt":"2024-10-28T10:00:00Z"},"signedUrl":"https://storage.example.com/upload-url"}
+
+---
+
+EP: GET /documents/{documentId}
+DESC: Get specific document by ID.
+IN: headers:{Authorization:str!}, params:{documentId:str!}
+OUT: 200:{id:str, fileName:str, fileSize:int, fileType:str, documentType:obj{id:str, name:str, description:str, required:bool, category:str, acceptedFormats:arr[str], maxFileSize:int}, clientId:str, status:str, signedUrl:str?, uploadedAt:str, verifiedAt:str?, rejectionReason:str?}
+ERR: {"401":"Unauthorized", "404":"Document not found", "403":"Forbidden - cannot access document", "500":"Internal server error"}
+EX_REQ: curl -X GET /documents/doc-456 -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: {"id":"doc-456","fileName":"bank_statement.pdf","fileSize":1048576,"fileType":"application/pdf","documentType":{"id":"bank-statement","name":"Bank Statement","description":"Recent bank statements","required":true,"category":"financial","acceptedFormats":["application/pdf","image/jpeg","image/png"],"maxFileSize":10485760},"clientId":"client123","status":"uploaded","signedUrl":"https://storage.example.com/view-url","uploadedAt":"2024-10-28T10:00:00Z"}
+
+---
+
+EP: PUT /documents/{documentId}/status
+DESC: Update document status and verification details.
+IN: headers:{Authorization:str!}, params:{documentId:str!}, body:{status:str!, rejectionReason:str?}
+OUT: 200:{id:str, fileName:str, fileSize:int, fileType:str, documentType:obj{id:str, name:str, description:str, required:bool, category:str, acceptedFormats:arr[str], maxFileSize:int}, clientId:str, status:str, signedUrl:str?, uploadedAt:str, verifiedAt:str?, rejectionReason:str?}
+ERR: {"400":"Invalid status or missing rejection reason", "401":"Unauthorized", "404":"Document not found", "403":"Forbidden - insufficient permissions", "500":"Internal server error"}
+EX_REQ: curl -X PUT /documents/doc-456/status -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"status":"verified"}'
+EX_RES_200: {"id":"doc-456","fileName":"bank_statement.pdf","fileSize":1048576,"fileType":"application/pdf","documentType":{"id":"bank-statement","name":"Bank Statement","description":"Recent bank statements","required":true,"category":"financial","acceptedFormats":["application/pdf","image/jpeg","image/png"],"maxFileSize":10485760},"clientId":"client123","status":"verified","signedUrl":"https://storage.example.com/view-url","uploadedAt":"2024-10-28T10:00:00Z","verifiedAt":"2024-10-28T11:00:00Z"}

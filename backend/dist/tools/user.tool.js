@@ -6,7 +6,6 @@ const userSchema = z.object({
     id: z.number(),
     email: z.string(),
     name: z.string().nullable(),
-    password: z.string(),
     role: z.string(),
     isEmailVerified: z.boolean(),
     createdAt: z.string(),
@@ -25,28 +24,42 @@ const createUserTool = {
     outputSchema: userSchema,
     fn: async (inputs) => {
         const user = await userService.createUser(inputs.email, inputs.password, inputs.name, inputs.role);
-        return user;
+        // Exclude password from response
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
     }
 };
 const getUsersTool = {
-    id: 'user_get_all',
-    name: 'Get All Users',
-    description: 'Get all users with optional filters and pagination',
+    id: 'user_list',
+    name: 'List Users',
+    description: 'Get all users with optional filters and pagination (admin only)',
     inputSchema: z.object({
         name: z.string().optional(),
         role: z.string().optional(),
         sortBy: z.string().optional(),
-        limit: z.number().int().optional(),
-        page: z.number().int().optional()
+        limit: z.number().int().optional().default(10),
+        page: z.number().int().optional().default(1)
     }),
     outputSchema: z.object({
-        users: z.array(userSchema)
+        results: z.array(userSchema),
+        page: z.number(),
+        limit: z.number(),
+        totalPages: z.number(),
+        totalResults: z.number()
     }),
     fn: async (inputs) => {
         const filter = pick(inputs, ['name', 'role']);
         const options = pick(inputs, ['sortBy', 'limit', 'page']);
-        const result = await userService.queryUsers(filter, options);
-        return { users: result };
+        const result = await userService.queryUsers(filter, options, [
+            'id',
+            'email',
+            'name',
+            'role',
+            'isEmailVerified',
+            'createdAt',
+            'updatedAt'
+        ]);
+        return result;
     }
 };
 const getUserTool = {
@@ -58,7 +71,15 @@ const getUserTool = {
     }),
     outputSchema: userSchema,
     fn: async (inputs) => {
-        const user = await userService.getUserById(inputs.userId);
+        const user = await userService.getUserById(inputs.userId, [
+            'id',
+            'email',
+            'name',
+            'role',
+            'isEmailVerified',
+            'createdAt',
+            'updatedAt'
+        ]);
         if (!user) {
             throw new Error('User not found');
         }
@@ -78,7 +99,18 @@ const updateUserTool = {
     outputSchema: userSchema,
     fn: async (inputs) => {
         const updateBody = pick(inputs, ['name', 'email', 'password']);
-        const user = await userService.updateUserById(inputs.userId, updateBody);
+        const user = await userService.updateUserById(inputs.userId, updateBody, [
+            'id',
+            'email',
+            'name',
+            'role',
+            'isEmailVerified',
+            'createdAt',
+            'updatedAt'
+        ]);
+        if (!user) {
+            throw new Error('User not found');
+        }
         return user;
     }
 };

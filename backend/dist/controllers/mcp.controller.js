@@ -3,6 +3,7 @@ import { registerMCPTools } from "../services/mcp.service.js";
 import { activityTools } from "../tools/activity.tool.js";
 import { clientTools } from "../tools/client.tool.js";
 import { dashboardTools } from "../tools/dashboard.tool.js";
+import { documentTools } from "../tools/document.tool.js";
 import { userTools } from "../tools/user.tool.js";
 import catchAsync from "../utils/catchAsync.js";
 import { Server } from '@modelcontextprotocol/sdk/server';
@@ -40,7 +41,10 @@ export const mcpPostController = catchAsync(async (req, res) => {
                 tools: {}
             }
         });
-        registerMCPTools({ server, tools: [...userTools, ...clientTools, ...dashboardTools, ...activityTools] });
+        registerMCPTools({
+            server,
+            tools: [...userTools, ...clientTools, ...dashboardTools, ...activityTools, ...documentTools]
+        });
         await server.connect(transport);
     }
     else {

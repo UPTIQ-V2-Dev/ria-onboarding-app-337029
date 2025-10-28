@@ -17,6 +17,20 @@ async function main() {
         }
     });
     console.log('✅ Created admin user:', admin.email);
+    // Create regular user
+    const userPassword = await bcrypt.hash('user123', 12);
+    const regularUser = await prisma.user.upsert({
+        where: { email: 'user@example.com' },
+        update: {},
+        create: {
+            email: 'user@example.com',
+            name: 'John Doe',
+            password: userPassword,
+            role: Role.USER,
+            isEmailVerified: true
+        }
+    });
+    console.log('✅ Created regular user:', regularUser.email);
     // Create sample clients for the admin user
     const sampleClients = [
         {
@@ -107,6 +121,80 @@ async function main() {
             }
         });
         console.log('✅ Created activity:', activity.type, 'for', activity.clientName);
+    }
+    // Create document types
+    const documentTypes = [
+        {
+            id: 'id-verification',
+            name: 'ID Verification',
+            description: "Government-issued photo ID (driver's license, passport, state ID)",
+            required: true,
+            category: 'identity',
+            acceptedFormats: ['image/jpeg', 'image/png', 'application/pdf'],
+            maxFileSize: 5242880 // 5MB
+        },
+        {
+            id: 'proof-of-address',
+            name: 'Proof of Address',
+            description: 'Utility bill, bank statement, or lease agreement dated within 3 months',
+            required: true,
+            category: 'identity',
+            acceptedFormats: ['image/jpeg', 'image/png', 'application/pdf'],
+            maxFileSize: 5242880 // 5MB
+        },
+        {
+            id: 'bank-statement',
+            name: 'Bank Statement',
+            description: 'Recent bank statements (last 3 months)',
+            required: true,
+            category: 'financial',
+            acceptedFormats: ['application/pdf', 'image/jpeg', 'image/png'],
+            maxFileSize: 10485760 // 10MB
+        },
+        {
+            id: 'tax-return',
+            name: 'Tax Return',
+            description: 'Most recent tax return or tax transcript',
+            required: false,
+            category: 'financial',
+            acceptedFormats: ['application/pdf'],
+            maxFileSize: 10485760 // 10MB
+        },
+        {
+            id: 'employment-verification',
+            name: 'Employment Verification',
+            description: 'Pay stubs, employment letter, or contract',
+            required: false,
+            category: 'financial',
+            acceptedFormats: ['application/pdf', 'image/jpeg', 'image/png'],
+            maxFileSize: 5242880 // 5MB
+        },
+        {
+            id: 'investment-account',
+            name: 'Investment Account Statement',
+            description: 'Statements from other investment accounts',
+            required: false,
+            category: 'financial',
+            acceptedFormats: ['application/pdf', 'image/jpeg', 'image/png'],
+            maxFileSize: 10485760 // 10MB
+        },
+        {
+            id: 'w9-form',
+            name: 'W-9 Form',
+            description: 'Completed and signed W-9 tax form',
+            required: true,
+            category: 'tax',
+            acceptedFormats: ['application/pdf'],
+            maxFileSize: 5242880 // 5MB
+        }
+    ];
+    for (const docTypeData of documentTypes) {
+        const docType = await prisma.documentType.upsert({
+            where: { id: docTypeData.id },
+            update: {},
+            create: docTypeData
+        });
+        console.log('✅ Created document type:', docType.name);
     }
 }
 main()

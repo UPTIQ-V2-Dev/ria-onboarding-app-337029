@@ -166,6 +166,30 @@ exports.Prisma.ActivityScalarFieldEnum = {
   clientId: 'clientId'
 };
 
+exports.Prisma.DocumentTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  required: 'required',
+  category: 'category',
+  acceptedFormats: 'acceptedFormats',
+  maxFileSize: 'maxFileSize'
+};
+
+exports.Prisma.DocumentScalarFieldEnum = {
+  id: 'id',
+  fileName: 'fileName',
+  fileSize: 'fileSize',
+  fileType: 'fileType',
+  documentTypeId: 'documentTypeId',
+  clientId: 'clientId',
+  status: 'status',
+  signedUrl: 'signedUrl',
+  uploadedAt: 'uploadedAt',
+  verifiedAt: 'verifiedAt',
+  rejectionReason: 'rejectionReason'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -196,7 +220,9 @@ exports.Prisma.ModelName = {
   User: 'User',
   Token: 'Token',
   Client: 'Client',
-  Activity: 'Activity'
+  Activity: 'Activity',
+  DocumentType: 'DocumentType',
+  Document: 'Document'
 };
 
 /**

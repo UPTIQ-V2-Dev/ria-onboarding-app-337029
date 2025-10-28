@@ -3,3 +3,5 @@ export { default as userController } from "./user.controller.js";
 export { default as clientController } from "./client.controller.js";
 export { default as dashboardController } from "./dashboard.controller.js";
 export { default as activityController } from "./activity.controller.js";
+export { default as documentController } from "./document.controller.js";
+export { mcpPostController, mcpGetController, mcpDeleteController } from "./mcp.controller.js";
