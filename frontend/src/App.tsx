@@ -5,6 +5,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ComingSoonPage } from '@/pages/ComingSoonPage';
+import { DocumentUploadPage } from '@/pages/DocumentUploadPage';
 
 export const App = () => {
     return (
@@ -54,6 +55,10 @@ export const App = () => {
                                     description='Detailed client view and management features are coming soon.'
                                 />
                             }
+                        />
+                        <Route
+                            path='onboarding/documents'
+                            element={<DocumentUploadPage />}
                         />
                         <Route
                             path='onboarding/*'

@@ -9,7 +9,8 @@ import {
     Bell,
     LogOut,
     ChevronDown,
-    User
+    User,
+    Upload
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,11 @@ const navigation = [
         name: 'Clients',
         href: '/clients',
         icon: Users
+    },
+    {
+        name: 'Document Upload',
+        href: '/onboarding/documents',
+        icon: Upload
     },
     {
         name: 'Onboarding',
