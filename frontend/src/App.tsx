@@ -6,6 +6,8 @@ import { RegisterPage } from '@/pages/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ComingSoonPage } from '@/pages/ComingSoonPage';
 import { DocumentUploadPage } from '@/pages/DocumentUploadPage';
+import { ClientsPage } from '@/pages/ClientsPage';
+import { ClientDetailPage } from '@/pages/ClientDetailPage';
 import { ClientInfoPage } from '@/pages/onboarding/ClientInfoPage';
 import { RiskAssessmentPage } from '@/pages/onboarding/RiskAssessmentPage';
 import { ObjectivesPage } from '@/pages/onboarding/ObjectivesPage';
@@ -47,21 +49,11 @@ export const App = () => {
                         />
                         <Route
                             path='clients'
-                            element={
-                                <ComingSoonPage
-                                    title='Client Management'
-                                    description='Comprehensive client management tools are coming soon.'
-                                />
-                            }
+                            element={<ClientsPage />}
                         />
                         <Route
                             path='clients/:id'
-                            element={
-                                <ComingSoonPage
-                                    title='Client Details'
-                                    description='Detailed client view and management features are coming soon.'
-                                />
-                            }
+                            element={<ClientDetailPage />}
                         />
                         <Route
                             path='onboarding/client-info'
