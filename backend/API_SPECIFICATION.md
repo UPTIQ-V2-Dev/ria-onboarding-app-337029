@@ -78,6 +78,86 @@ model DocumentType {
   maxFileSize     Int
   documents       Document[]
 }
+
+model OnboardingData {
+  id                 String                 @id @default(cuid())
+  clientId           String                 @unique
+  personalInfo       Json
+  contactInfo        Json?
+  employmentInfo     Json?
+  riskProfile        Json?
+  investmentObjectives Json?
+  financialGoals     Json[]
+  selectedAccountTypes String[]
+  fundingMethods     Json[]
+  uploadedDocuments  Json[]
+  disclosures        Json[]
+  complianceRecords  Json[]
+  status             String                 @default("draft")
+  currentStep        Int                    @default(1)
+  totalSteps         Int                    @default(7)
+  submittedAt        DateTime?
+  reviewedAt         DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+}
+
+model RiskAssessment {
+  id                   String   @id @default(cuid())
+  clientId             String   @unique
+  investmentExperience String
+  riskTolerance        String
+  investmentTimeHorizon String
+  liquidityNeeds       String
+  ageRange             String
+  investmentKnowledge  String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model InvestmentObjectives {
+  id                  String    @id @default(cuid())
+  clientId            String    @unique
+  primaryGoal         String
+  specificGoals       String[]
+  targetAmount        Float?
+  timeHorizon         Int
+  monthlyContribution Float?
+  riskComfort         Int
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model AccountType {
+  id             String  @id @default(cuid())
+  name           String  @unique
+  description    String
+  taxAdvantaged  Boolean @default(false)
+  minimumBalance Float   @default(0)
+  annualFee      Float   @default(0)
+  transactionFee Float   @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Disclosure {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  required  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ComplianceAgreement {
+  id           String    @id @default(cuid())
+  clientId     String
+  disclosureId String
+  acknowledged Boolean   @default(false)
+  acknowledgedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
 ```
 
 ## Authentication Endpoints
@@ -429,3 +509,163 @@ OUT: 200:{recommendations:arr[obj{product:str, description:str, reasoning:str, p
 ERR: {"400":"Document not suitable for analysis", "401":"Unauthorized", "404":"Document not found", "403":"Forbidden - cannot analyze document", "422":"Document not verified or analysis failed", "500":"Internal server error"}
 EX_REQ: curl -X POST /documents/doc-456/analyze -H "Authorization: Bearer eyJhbGc.."
 EX_RES_200: {"recommendations":[{"product":"High-Yield Savings Account","description":"Maximize returns on excess cash with competitive interest rates","reasoning":"Based on your current cash position and liquidity needs, a high-yield savings account would provide better returns while maintaining accessibility","priority":"high"},{"product":"Short-Term Treasury Bills","description":"Low-risk investment for surplus funds","reasoning":"Your conservative risk profile and short-term liquidity requirements make Treasury Bills an ideal choice","priority":"medium"}]}
+
+## Onboarding Management Endpoints
+
+EP: POST /onboarding
+DESC: Create initial onboarding data for a client.
+IN: headers:{Authorization:str!}, body:{clientId:str!, personalInfo:obj{firstName:str!, lastName:str!, email:str!, phone:str!, dateOfBirth:str!, socialSecurityNumber:str!, address:obj{street:str!, city:str!, state:str!, zipCode:str!, country:str!}}, contactInfo:obj{preferredContactMethod:str!, emergencyContact:obj{name:str!, relationship:str!, phone:str!, email:str!}}, employmentInfo:obj{employmentStatus:str!, employer:str?, jobTitle:str?, industry:str?, annualIncome:int!, netWorth:int!, liquidNetWorth:int!}}
+OUT: 201:{clientId:str, status:str, currentStep:int, totalSteps:int, createdAt:str}
+ERR: {"400":"Invalid input or client already exists", "401":"Unauthorized", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X POST /onboarding -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"clientId":"client-123","personalInfo":{"firstName":"John","lastName":"Doe","email":"john.doe@example.com","phone":"+1-555-123-4567","dateOfBirth":"1990-05-15","socialSecurityNumber":"123-45-6789","address":{"street":"123 Main St","city":"New York","state":"NY","zipCode":"10001","country":"USA"}}}'
+EX_RES_201: {"clientId":"client-123","status":"draft","currentStep":1,"totalSteps":7,"createdAt":"2024-10-28T10:00:00Z"}
+
+---
+
+EP: GET /onboarding/{clientId}
+DESC: Get onboarding data for a specific client.
+IN: headers:{Authorization:str!}, params:{clientId:str!}
+OUT: 200:{clientId:str, personalInfo:obj, contactInfo:obj?, employmentInfo:obj?, riskProfile:obj?, investmentObjectives:obj?, financialGoals:arr[obj], selectedAccountTypes:arr[str], fundingMethods:arr[obj], uploadedDocuments:arr[obj], disclosures:arr[obj], complianceRecords:arr[obj], status:str, currentStep:int, totalSteps:int, submittedAt:str?, reviewedAt:str?}
+ERR: {"401":"Unauthorized", "404":"Onboarding data not found", "403":"Forbidden - cannot access onboarding data", "500":"Internal server error"}
+EX_REQ: curl -X GET /onboarding/client-123 -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: {"clientId":"client-123","personalInfo":{"firstName":"John","lastName":"Doe","email":"john.doe@example.com","phone":"+1-555-123-4567","dateOfBirth":"1990-05-15","socialSecurityNumber":"***-**-6789","address":{"street":"123 Main St","city":"New York","state":"NY","zipCode":"10001","country":"USA"}},"status":"draft","currentStep":1,"totalSteps":7}
+
+---
+
+EP: PUT /onboarding/{clientId}/step/{stepNumber}
+DESC: Update onboarding data for a specific step.
+IN: headers:{Authorization:str!}, params:{clientId:str!, stepNumber:int!}, body:obj
+OUT: 200:{clientId:str, personalInfo:obj, contactInfo:obj?, employmentInfo:obj?, riskProfile:obj?, investmentObjectives:obj?, financialGoals:arr[obj], selectedAccountTypes:arr[str], fundingMethods:arr[obj], uploadedDocuments:arr[obj], disclosures:arr[obj], complianceRecords:arr[obj], status:str, currentStep:int, totalSteps:int, submittedAt:str?, reviewedAt:str?}
+ERR: {"400":"Invalid step or data", "401":"Unauthorized", "404":"Onboarding data not found", "403":"Forbidden - cannot update onboarding data", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X PUT /onboarding/client-123/step/2 -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"riskProfile":{"investmentExperience":"good","riskTolerance":"moderate","investmentTimeHorizon":"long","liquidityNeeds":"low","ageRange":"31-45","investmentKnowledge":"intermediate"}}'
+EX_RES_200: {"clientId":"client-123","personalInfo":{"firstName":"John","lastName":"Doe"},"riskProfile":{"investmentExperience":"good","riskTolerance":"moderate","investmentTimeHorizon":"long","liquidityNeeds":"low","ageRange":"31-45","investmentKnowledge":"intermediate"},"status":"draft","currentStep":2,"totalSteps":7}
+
+---
+
+EP: GET /onboarding/{clientId}/summary
+DESC: Get onboarding summary for review.
+IN: headers:{Authorization:str!}, params:{clientId:str!}
+OUT: 200:{clientId:str, personalInfo:obj, riskProfile:obj, investmentObjectives:obj, selectedAccounts:arr[obj], totalFunding:float, documentsStatus:obj{total:int, uploaded:int, pending:int, approved:int}, complianceStatus:obj{total:int, completed:int}, estimatedCompletionDate:str}
+ERR: {"401":"Unauthorized", "404":"Onboarding data not found", "403":"Forbidden - cannot access onboarding summary", "500":"Internal server error"}
+EX_REQ: curl -X GET /onboarding/client-123/summary -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: {"clientId":"client-123","personalInfo":{"firstName":"John","lastName":"Doe","email":"john.doe@example.com"},"riskProfile":{"riskTolerance":"moderate"},"totalFunding":100000,"documentsStatus":{"total":3,"uploaded":2,"pending":1,"approved":1},"complianceStatus":{"total":3,"completed":3},"estimatedCompletionDate":"2024-11-04T10:00:00Z"}
+
+---
+
+EP: POST /onboarding/submit
+DESC: Submit completed onboarding for review.
+IN: headers:{Authorization:str!}, body:{clientId:str!, finalReview:bool!, electronicallySign:bool!, signatureDate:str!}
+OUT: 200:{submissionId:str, status:str, submittedAt:str}
+ERR: {"400":"Incomplete onboarding or invalid data", "401":"Unauthorized", "404":"Onboarding data not found", "403":"Forbidden - cannot submit onboarding", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X POST /onboarding/submit -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"clientId":"client-123","finalReview":true,"electronicallySign":true,"signatureDate":"2024-10-28T15:00:00Z"}'
+EX_RES_200: {"submissionId":"sub-456","status":"submitted","submittedAt":"2024-10-28T15:00:00Z"}
+
+## Risk Assessment Endpoints
+
+EP: POST /risk-assessment
+DESC: Submit risk assessment questionnaire.
+IN: headers:{Authorization:str!}, body:{clientId:str!, investmentExperience:str!, riskTolerance:str!, investmentTimeHorizon:str!, liquidityNeeds:str!, ageRange:str!, investmentKnowledge:str!}
+OUT: 201:{id:str, clientId:str, investmentExperience:str, riskTolerance:str, investmentTimeHorizon:str, liquidityNeeds:str, ageRange:str, investmentKnowledge:str, createdAt:str}
+ERR: {"400":"Invalid input", "401":"Unauthorized", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X POST /risk-assessment -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"clientId":"client-123","investmentExperience":"good","riskTolerance":"moderate","investmentTimeHorizon":"long","liquidityNeeds":"low","ageRange":"31-45","investmentKnowledge":"intermediate"}'
+EX_RES_201: {"id":"risk-789","clientId":"client-123","investmentExperience":"good","riskTolerance":"moderate","investmentTimeHorizon":"long","liquidityNeeds":"low","ageRange":"31-45","investmentKnowledge":"intermediate","createdAt":"2024-10-28T10:00:00Z"}
+
+---
+
+EP: GET /risk-profiles
+DESC: Get available risk profile templates.
+IN: headers:{Authorization:str!}
+OUT: 200:arr[obj{investmentExperience:str, riskTolerance:str, investmentTimeHorizon:str, liquidityNeeds:str, ageRange:str, investmentKnowledge:str}]
+ERR: {"401":"Unauthorized", "500":"Internal server error"}
+EX_REQ: curl -X GET /risk-profiles -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: [{"investmentExperience":"limited","riskTolerance":"conservative","investmentTimeHorizon":"long","liquidityNeeds":"medium","ageRange":"31-45","investmentKnowledge":"beginner"},{"investmentExperience":"good","riskTolerance":"moderate","investmentTimeHorizon":"long","liquidityNeeds":"low","ageRange":"31-45","investmentKnowledge":"intermediate"}]
+
+## Investment Objectives Endpoints
+
+EP: POST /investment-objectives
+DESC: Submit investment objectives.
+IN: headers:{Authorization:str!}, body:{clientId:str!, primaryGoal:str!, specificGoals:arr[str]!, targetAmount:float?, timeHorizon:int!, monthlyContribution:float?, riskComfort:int!}
+OUT: 201:{id:str, clientId:str, primaryGoal:str, specificGoals:arr[str], targetAmount:float?, timeHorizon:int, monthlyContribution:float?, riskComfort:int, createdAt:str}
+ERR: {"400":"Invalid input", "401":"Unauthorized", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X POST /investment-objectives -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"clientId":"client-123","primaryGoal":"growth","specificGoals":["Retirement","Long-term wealth building"],"targetAmount":1000000,"timeHorizon":25,"monthlyContribution":2000,"riskComfort":7}'
+EX_RES_201: {"id":"obj-456","clientId":"client-123","primaryGoal":"growth","specificGoals":["Retirement","Long-term wealth building"],"targetAmount":1000000,"timeHorizon":25,"monthlyContribution":2000,"riskComfort":7,"createdAt":"2024-10-28T10:00:00Z"}
+
+## Account Management Endpoints
+
+EP: GET /account-types
+DESC: Get available account types for client selection.
+IN: headers:{Authorization:str!}
+OUT: 200:arr[obj{id:str, name:str, description:str, taxAdvantaged:bool, minimumBalance:float, fees:obj{annual:float, transaction:float}}]
+ERR: {"401":"Unauthorized", "500":"Internal server error"}
+EX_REQ: curl -X GET /account-types -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: [{"id":"traditional_ira","name":"Traditional IRA","description":"Tax-deferred retirement account","taxAdvantaged":true,"minimumBalance":1000,"fees":{"annual":25,"transaction":0}},{"id":"roth_ira","name":"Roth IRA","description":"Tax-free retirement account","taxAdvantaged":true,"minimumBalance":1000,"fees":{"annual":25,"transaction":0}}]
+
+---
+
+EP: POST /accounts
+DESC: Create accounts for a client based on selected account types.
+IN: headers:{Authorization:str!}, body:{clientId:str!, accountTypeIds:arr[str]!}
+OUT: 201:{accountIds:arr[str]}
+ERR: {"400":"Invalid account types or client", "401":"Unauthorized", "404":"Client or account type not found", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X POST /accounts -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"clientId":"client-123","accountTypeIds":["traditional_ira","roth_ira"]}'
+EX_RES_201: {"accountIds":["acc_traditional_ira_123","acc_roth_ira_456"]}
+
+## Compliance Management Endpoints
+
+EP: GET /disclosures
+DESC: Get all compliance disclosures and agreements.
+IN: headers:{Authorization:str!}
+OUT: 200:arr[obj{id:str, title:str, content:str, required:bool}]
+ERR: {"401":"Unauthorized", "500":"Internal server error"}
+EX_REQ: curl -X GET /disclosures -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: [{"id":"investment_risks","title":"Investment Risk Disclosure","content":"Investment involves risk, including potential loss of principal...","required":true},{"id":"privacy_policy","title":"Privacy Policy","content":"This privacy policy describes how we collect and use your personal information...","required":true}]
+
+---
+
+EP: POST /compliance/agreements
+DESC: Record client acknowledgment of disclosures.
+IN: headers:{Authorization:str!}, body:{clientId:str!, disclosureIds:arr[str]!}
+OUT: 201:{agreements:arr[obj{id:str, clientId:str, disclosureId:str, acknowledged:bool, acknowledgedAt:str}]}
+ERR: {"400":"Invalid disclosure IDs", "401":"Unauthorized", "404":"Client or disclosure not found", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X POST /compliance/agreements -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"clientId":"client-123","disclosureIds":["investment_risks","privacy_policy","terms_of_service"]}'
+EX_RES_201: {"agreements":[{"id":"agr-789","clientId":"client-123","disclosureId":"investment_risks","acknowledged":true,"acknowledgedAt":"2024-10-28T10:00:00Z"}]}
+
+## Additional Client Management Endpoints
+
+EP: PUT /clients/bulk-status
+DESC: Update status for multiple clients simultaneously.
+IN: headers:{Authorization:str!}, body:{clientIds:arr[str]!, status:str!}
+OUT: 200:{updatedCount:int, clients:arr[obj{id:str, firstName:str, lastName:str, email:str, phone:str, status:str, createdAt:str, updatedAt:str, progress:int, riskProfile:str?, accountValue:float?, firmId:str}]}
+ERR: {"400":"Invalid client IDs or status", "401":"Unauthorized", "404":"One or more clients not found", "422":"Validation failed", "500":"Internal server error"}
+EX_REQ: curl -X PUT /clients/bulk-status -H "Authorization: Bearer eyJhbGc.." -H "Content-Type: application/json" -d '{"clientIds":["client-123","client-456"],"status":"in_progress"}'
+EX_RES_200: {"updatedCount":2,"clients":[{"id":"client-123","firstName":"John","lastName":"Smith","email":"john.smith@email.com","phone":"+1-555-0456","status":"in_progress","createdAt":"2024-10-28T15:00:00Z","updatedAt":"2024-10-28T15:30:00Z","progress":25,"firmId":"firm-1"}]}
+
+---
+
+EP: GET /clients/export
+DESC: Export client data as CSV or Excel file.
+IN: headers:{Authorization:str!}, query:{status:str?, search:str?, riskProfile:str?, format:str?}
+OUT: 200:file
+ERR: {"401":"Unauthorized", "400":"Invalid export format", "500":"Internal server error"}
+EX_REQ: curl -X GET '/clients/export?status=completed&format=csv' -H "Authorization: Bearer eyJhbGc.." --output clients_export.csv
+EX_RES_200: Binary file content (CSV/Excel)
+
+---
+
+EP: POST /documents/upload
+DESC: Upload document with multipart form data.
+IN: headers:{Authorization:str!}, body:multipart{file:file!, clientId:str!, documentTypeId:str!}
+OUT: 201:{id:str, documentTypeId:str, fileName:str, fileSize:int, mimeType:str, uploadedAt:str, status:str, signedUrl:str?}
+ERR: {"400":"Invalid file or missing data", "401":"Unauthorized", "413":"File too large", "415":"Unsupported file type", "500":"Internal server error"}
+EX_REQ: curl -X POST /documents/upload -H "Authorization: Bearer eyJhbGc.." -F "file=@document.pdf" -F "clientId=client-123" -F "documentTypeId=bank_statement"
+EX_RES_201: {"id":"doc-789","documentTypeId":"bank_statement","fileName":"document.pdf","fileSize":1048576,"mimeType":"application/pdf","uploadedAt":"2024-10-28T10:00:00Z","status":"pending","signedUrl":"https://storage.example.com/signed-url"}
+
+---
+
+EP: GET /documents/client/{clientId}
+DESC: Get all documents uploaded by a specific client during onboarding.
+IN: headers:{Authorization:str!}, params:{clientId:str!}
+OUT: 200:arr[obj{id:str, documentTypeId:str, fileName:str, fileSize:int, mimeType:str, uploadedAt:str, status:str, rejectionReason:str?, signedUrl:str?}]
+ERR: {"401":"Unauthorized", "404":"Client not found", "403":"Forbidden - cannot access client documents", "500":"Internal server error"}
+EX_REQ: curl -X GET /documents/client/client-123 -H "Authorization: Bearer eyJhbGc.."
+EX_RES_200: [{"id":"doc-789","documentTypeId":"bank_statement","fileName":"statement.pdf","fileSize":1048576,"mimeType":"application/pdf","uploadedAt":"2024-10-28T10:00:00Z","status":"pending","signedUrl":"https://storage.example.com/view-url"}]

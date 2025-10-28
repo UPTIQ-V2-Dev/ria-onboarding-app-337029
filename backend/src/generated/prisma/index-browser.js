@@ -163,16 +163,6 @@ exports.Prisma.ActivityScalarFieldEnum = {
   clientId: 'clientId'
 };
 
-exports.Prisma.DocumentTypeScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  description: 'description',
-  required: 'required',
-  category: 'category',
-  acceptedFormats: 'acceptedFormats',
-  maxFileSize: 'maxFileSize'
-};
-
 exports.Prisma.DocumentScalarFieldEnum = {
   id: 'id',
   fileName: 'fileName',
@@ -187,14 +177,124 @@ exports.Prisma.DocumentScalarFieldEnum = {
   rejectionReason: 'rejectionReason'
 };
 
+exports.Prisma.DocumentTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  required: 'required',
+  category: 'category',
+  acceptedFormats: 'acceptedFormats',
+  maxFileSize: 'maxFileSize'
+};
+
+exports.Prisma.OnboardingDataScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  personalInfo: 'personalInfo',
+  contactInfo: 'contactInfo',
+  employmentInfo: 'employmentInfo',
+  riskProfile: 'riskProfile',
+  investmentObjectives: 'investmentObjectives',
+  financialGoals: 'financialGoals',
+  selectedAccountTypes: 'selectedAccountTypes',
+  fundingMethods: 'fundingMethods',
+  uploadedDocuments: 'uploadedDocuments',
+  disclosures: 'disclosures',
+  complianceRecords: 'complianceRecords',
+  status: 'status',
+  currentStep: 'currentStep',
+  totalSteps: 'totalSteps',
+  submittedAt: 'submittedAt',
+  reviewedAt: 'reviewedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RiskAssessmentScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  investmentExperience: 'investmentExperience',
+  riskTolerance: 'riskTolerance',
+  investmentTimeHorizon: 'investmentTimeHorizon',
+  liquidityNeeds: 'liquidityNeeds',
+  ageRange: 'ageRange',
+  investmentKnowledge: 'investmentKnowledge',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InvestmentObjectivesScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  primaryGoal: 'primaryGoal',
+  specificGoals: 'specificGoals',
+  targetAmount: 'targetAmount',
+  timeHorizon: 'timeHorizon',
+  monthlyContribution: 'monthlyContribution',
+  riskComfort: 'riskComfort',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AccountTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  taxAdvantaged: 'taxAdvantaged',
+  minimumBalance: 'minimumBalance',
+  annualFee: 'annualFee',
+  transactionFee: 'transactionFee',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DisclosureScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  required: 'required',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ComplianceAgreementScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  disclosureId: 'disclosureId',
+  acknowledged: 'acknowledged',
+  acknowledgedAt: 'acknowledgedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
 };
 
 
@@ -203,8 +303,14 @@ exports.Prisma.ModelName = {
   Token: 'Token',
   Client: 'Client',
   Activity: 'Activity',
+  Document: 'Document',
   DocumentType: 'DocumentType',
-  Document: 'Document'
+  OnboardingData: 'OnboardingData',
+  RiskAssessment: 'RiskAssessment',
+  InvestmentObjectives: 'InvestmentObjectives',
+  AccountType: 'AccountType',
+  Disclosure: 'Disclosure',
+  ComplianceAgreement: 'ComplianceAgreement'
 };
 
 /**

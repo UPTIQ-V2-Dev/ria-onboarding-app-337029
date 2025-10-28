@@ -63,6 +63,20 @@ const analyzeDocument = {
     })
 };
 
+const uploadDocument = {
+    body: Joi.object().keys({
+        clientId: Joi.string().required(),
+        documentTypeId: Joi.string().required()
+    })
+    // Note: File validation is handled by multer middleware
+};
+
+const getClientDocumentsByParams = {
+    params: Joi.object().keys({
+        clientId: Joi.string().required()
+    })
+};
+
 export default {
     getDocumentTypes,
     getClientDocuments,
@@ -71,5 +85,7 @@ export default {
     updateDocumentStatus,
     deleteDocument,
     queryDocuments,
-    analyzeDocument
+    analyzeDocument,
+    uploadDocument,
+    getClientDocumentsByParams
 };

@@ -12,6 +12,15 @@ const validate = (schema: object) => (req: RequestWithAdditionalProperties, res:
         .prefs({ errors: { label: 'key' }, abortEarly: false })
         .validate(obj);
     if (error) {
+        // Check if this is a password validation error
+        const passwordError = error.details.find(
+            detail => detail.type === 'password.minLength' || detail.type === 'password.requirements'
+        );
+
+        if (passwordError) {
+            return next(new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Password validation failed'));
+        }
+
         const errorMessage = error.details.map(details => details.message).join(', ');
         return next(new ApiError(httpStatus.BAD_REQUEST, errorMessage));
     }

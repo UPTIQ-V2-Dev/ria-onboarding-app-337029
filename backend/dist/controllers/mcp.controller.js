@@ -1,10 +1,15 @@
 import logger from "../config/logger.js";
 import { JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_REQUEST } from "../constants/jsonrpc.constants.js";
 import { registerMCPTools } from "../services/mcp.service.js";
+import { accountTools } from "../tools/account.tool.js";
 import { activityTools } from "../tools/activity.tool.js";
 import { clientTools } from "../tools/client.tool.js";
+import { complianceTools } from "../tools/compliance.tool.js";
 import { dashboardTools } from "../tools/dashboard.tool.js";
 import { documentTools } from "../tools/document.tool.js";
+import { investmentObjectivesTools } from "../tools/investment-objectives.tool.js";
+import { onboardingTools } from "../tools/onboarding.tool.js";
+import { riskAssessmentTools } from "../tools/risk-assessment.tool.js";
 import { userTools } from "../tools/user.tool.js";
 import catchAsync from "../utils/catchAsync.js";
 import { Server } from '@modelcontextprotocol/sdk/server';
@@ -49,7 +54,18 @@ export const mcpPostController = catchAsync(async (req, res) => {
             });
             registerMCPTools({
                 server,
-                tools: [...userTools, ...clientTools, ...dashboardTools, ...activityTools, ...documentTools]
+                tools: [
+                    ...userTools,
+                    ...clientTools,
+                    ...dashboardTools,
+                    ...activityTools,
+                    ...documentTools,
+                    ...onboardingTools,
+                    ...riskAssessmentTools,
+                    ...investmentObjectivesTools,
+                    ...accountTools,
+                    ...complianceTools
+                ]
             });
             await server.connect(transport);
             logger.info('MCP server connected successfully');

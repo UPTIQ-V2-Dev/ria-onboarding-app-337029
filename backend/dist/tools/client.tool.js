@@ -140,11 +140,63 @@ const deleteClientTool = {
         return { success: true };
     }
 };
+const bulkUpdateStatusTool = {
+    id: 'client_bulk_update_status',
+    name: 'Bulk Update Client Status',
+    description: 'Update status for multiple clients simultaneously',
+    inputSchema: z.object({
+        clientIds: z.array(z.string().min(1)).min(1).max(100),
+        status: z.enum(['pending', 'in_progress', 'completed', 'rejected']),
+        userId: z.number().int()
+    }),
+    outputSchema: z.object({
+        updatedCount: z.number(),
+        clients: z.array(clientSchema)
+    }),
+    fn: async (inputs) => {
+        const result = await clientService.bulkUpdateStatus(inputs.clientIds, inputs.status, inputs.userId);
+        return result;
+    }
+};
+const exportClientsTool = {
+    id: 'client_export',
+    name: 'Export Clients',
+    description: 'Export clients data with optional filters',
+    inputSchema: z.object({
+        status: z.enum(['pending', 'in_progress', 'completed', 'rejected']).optional(),
+        riskProfile: z.enum(['conservative', 'moderate', 'aggressive']).optional(),
+        firmId: z.string().optional(),
+        search: z.string().optional(),
+        userId: z.number().int()
+    }),
+    outputSchema: z.object({
+        clients: z.array(clientSchema),
+        count: z.number()
+    }),
+    fn: async (inputs) => {
+        const filter = pick(inputs, ['status', 'riskProfile', 'firmId']);
+        // Add search functionality if provided
+        if (inputs.search) {
+            filter.OR = [
+                { firstName: { contains: inputs.search } },
+                { lastName: { contains: inputs.search } },
+                { email: { contains: inputs.search } }
+            ];
+        }
+        const clients = await clientService.exportClients(filter, inputs.userId);
+        return {
+            clients,
+            count: clients.length
+        };
+    }
+};
 export const clientTools = [
     createClientTool,
     getClientsTool,
     getRecentClientsTool,
     getClientTool,
     updateClientTool,
-    deleteClientTool
+    deleteClientTool,
+    bulkUpdateStatusTool,
+    exportClientsTool
 ];

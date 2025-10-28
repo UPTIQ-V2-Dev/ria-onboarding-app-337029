@@ -59,11 +59,28 @@ const getRecentClients = {
         limit: Joi.number().integer().min(1).max(50).default(10)
     })
 };
+const bulkUpdateStatus = {
+    body: Joi.object().keys({
+        clientIds: Joi.array().items(Joi.string().required()).min(1).max(100).required(),
+        status: Joi.string().valid('pending', 'in_progress', 'completed', 'rejected').required()
+    })
+};
+const exportClients = {
+    query: Joi.object().keys({
+        status: Joi.string().valid('pending', 'in_progress', 'completed', 'rejected'),
+        search: Joi.string(),
+        riskProfile: Joi.string().valid('conservative', 'moderate', 'aggressive'),
+        firmId: Joi.string(),
+        format: Joi.string().valid('csv', 'excel').default('csv')
+    })
+};
 export default {
     createClient,
     getClients,
     getClient,
     updateClient,
     deleteClient,
-    getRecentClients
+    getRecentClients,
+    bulkUpdateStatus,
+    exportClients
 };

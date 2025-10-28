@@ -64,11 +64,78 @@ const deleteClient = catchAsyncWithAuth(async (req, res) => {
     res.status(httpStatus.NO_CONTENT).send();
 });
 
+const bulkUpdateStatus = catchAsyncWithAuth(async (req, res) => {
+    const { clientIds, status } = req.body;
+    const result = await clientService.bulkUpdateStatus(clientIds, status, req.user.id);
+    res.send(result);
+});
+
+const exportClients = catchAsyncWithAuth(async (req, res) => {
+    const filter = pick(req.validatedQuery, ['status', 'riskProfile', 'firmId']);
+    const { search, format } = req.validatedQuery;
+
+    // Add search functionality if provided
+    if (search) {
+        filter.OR = [
+            { firstName: { contains: search } },
+            { lastName: { contains: search } },
+            { email: { contains: search } }
+        ];
+    }
+
+    const clients = await clientService.exportClients(filter, req.user.id);
+
+    // Generate CSV content
+    if (format === 'csv' || !format) {
+        const csvHeaders = [
+            'ID',
+            'First Name',
+            'Last Name',
+            'Email',
+            'Phone',
+            'Status',
+            'Progress',
+            'Risk Profile',
+            'Account Value',
+            'Firm ID',
+            'Created At',
+            'Updated At'
+        ];
+        const csvRows = clients.map(client => [
+            client.id,
+            client.firstName,
+            client.lastName,
+            client.email,
+            client.phone,
+            client.status,
+            client.progress,
+            client.riskProfile || '',
+            client.accountValue || '',
+            client.firmId,
+            client.createdAt.toISOString(),
+            client.updatedAt.toISOString()
+        ]);
+
+        const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.map(field => `"${field}"`).join(','))].join(
+            '\n'
+        );
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="clients_export.csv"');
+        res.send(csvContent);
+    } else {
+        // For now, just return JSON for excel format (could be enhanced with actual Excel generation)
+        res.json(clients);
+    }
+});
+
 export default {
     createClient,
     getClients,
     getRecentClients,
     getClient,
     updateClient,
-    deleteClient
+    deleteClient,
+    bulkUpdateStatus,
+    exportClients
 };

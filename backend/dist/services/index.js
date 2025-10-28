@@ -6,3 +6,8 @@ export { default as emailService } from "./email.service.js";
 export { default as dashboardService } from "./dashboard.service.js";
 export { default as activityService } from "./activity.service.js";
 export { default as documentService } from "./document.service.js";
+export { default as onboardingService } from "./onboarding.service.js";
+export { default as riskAssessmentService } from "./risk-assessment.service.js";
+export { default as investmentObjectivesService } from "./investment-objectives.service.js";
+export { default as accountService } from "./account.service.js";
+export { default as complianceService } from "./compliance.service.js";

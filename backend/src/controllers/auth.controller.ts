@@ -1,12 +1,12 @@
 import { User } from '../generated/prisma/index.js';
-import { authService, emailService, tokenService, userService } from '../services/index.ts';
+import { authService, emailService, tokenService } from '../services/index.ts';
 import catchAsync from '../utils/catchAsync.ts';
 import catchAsyncWithAuth from '../utils/catchAsyncWithAuth.ts';
 import httpStatus from 'http-status';
 
 const register = catchAsync(async (req, res) => {
     const { email, password } = req.body;
-    const user = await userService.createUser(email, password);
+    const user = await authService.registerUser(email, password);
     const userResponse = {
         id: user.id,
         email: user.email,
@@ -47,7 +47,7 @@ const refreshTokens = catchAsync(async (req, res) => {
 });
 
 const forgotPassword = catchAsync(async (req, res) => {
-    const resetPasswordToken = await tokenService.generateResetPasswordToken(req.body.email);
+    const resetPasswordToken = await authService.forgotPassword(req.body.email);
     await emailService.sendResetPasswordEmail(req.body.email, resetPasswordToken);
     res.status(httpStatus.NO_CONTENT).send();
 });

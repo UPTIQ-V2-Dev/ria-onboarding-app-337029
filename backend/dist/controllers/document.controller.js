@@ -130,6 +130,63 @@ const analyzeDocument = catchAsyncWithAuth(async (req, res) => {
     const result = await documentService.analyzeDocument(documentId);
     res.send(result);
 });
+const uploadDocument = catchAsyncWithAuth(async (req, res) => {
+    const requestingUser = req.user;
+    const { clientId, documentTypeId } = req.body;
+    // Validate that file was uploaded
+    if (!req.file) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'No file uploaded');
+    }
+    // Check if user has access to this client
+    if (requestingUser.role !== Role.ADMIN) {
+        const client = await clientService.getClientById(clientId);
+        if (!client || client.userId !== requestingUser.id) {
+            throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - cannot upload documents for this client');
+        }
+    }
+    const result = await documentService.uploadDocument({
+        file: req.file,
+        clientId,
+        documentTypeId
+    });
+    res.status(httpStatus.CREATED).send({
+        id: result.id,
+        documentTypeId: result.documentTypeId,
+        fileName: result.fileName,
+        fileSize: result.fileSize,
+        mimeType: result.fileType,
+        uploadedAt: result.uploadedAt,
+        status: result.status,
+        signedUrl: result.signedUrl
+    });
+});
+const getClientDocumentsByParams = catchAsyncWithAuth(async (req, res) => {
+    const { clientId } = req.params;
+    const requestingUser = req.user;
+    // Check if user has access to this client
+    // Users can only access documents for their own clients, admins can access all
+    if (requestingUser.role !== Role.ADMIN) {
+        // Check if the client belongs to the requesting user
+        const client = await clientService.getClientById(clientId);
+        if (!client || client.userId !== requestingUser.id) {
+            throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - cannot access documents for this client');
+        }
+    }
+    const documents = await documentService.getDocumentsByClientId(clientId);
+    // Transform documents to match API spec response format
+    const transformedDocuments = documents.map(doc => ({
+        id: doc.id,
+        documentTypeId: doc.documentTypeId,
+        fileName: doc.fileName,
+        fileSize: doc.fileSize,
+        mimeType: doc.fileType,
+        uploadedAt: doc.uploadedAt,
+        status: doc.status,
+        rejectionReason: doc.rejectionReason,
+        signedUrl: doc.signedUrl
+    }));
+    res.send(transformedDocuments);
+});
 export default {
     getDocumentTypes,
     getClientDocuments,
@@ -138,5 +195,7 @@ export default {
     updateDocumentStatus,
     deleteDocument,
     queryDocuments,
-    analyzeDocument
+    analyzeDocument,
+    uploadDocument,
+    getClientDocumentsByParams
 };

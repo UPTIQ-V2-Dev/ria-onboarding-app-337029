@@ -135,16 +135,6 @@ exports.Prisma.ActivityScalarFieldEnum = {
   clientId: 'clientId'
 };
 
-exports.Prisma.DocumentTypeScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  description: 'description',
-  required: 'required',
-  category: 'category',
-  acceptedFormats: 'acceptedFormats',
-  maxFileSize: 'maxFileSize'
-};
-
 exports.Prisma.DocumentScalarFieldEnum = {
   id: 'id',
   fileName: 'fileName',
@@ -159,14 +149,124 @@ exports.Prisma.DocumentScalarFieldEnum = {
   rejectionReason: 'rejectionReason'
 };
 
+exports.Prisma.DocumentTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  required: 'required',
+  category: 'category',
+  acceptedFormats: 'acceptedFormats',
+  maxFileSize: 'maxFileSize'
+};
+
+exports.Prisma.OnboardingDataScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  personalInfo: 'personalInfo',
+  contactInfo: 'contactInfo',
+  employmentInfo: 'employmentInfo',
+  riskProfile: 'riskProfile',
+  investmentObjectives: 'investmentObjectives',
+  financialGoals: 'financialGoals',
+  selectedAccountTypes: 'selectedAccountTypes',
+  fundingMethods: 'fundingMethods',
+  uploadedDocuments: 'uploadedDocuments',
+  disclosures: 'disclosures',
+  complianceRecords: 'complianceRecords',
+  status: 'status',
+  currentStep: 'currentStep',
+  totalSteps: 'totalSteps',
+  submittedAt: 'submittedAt',
+  reviewedAt: 'reviewedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RiskAssessmentScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  investmentExperience: 'investmentExperience',
+  riskTolerance: 'riskTolerance',
+  investmentTimeHorizon: 'investmentTimeHorizon',
+  liquidityNeeds: 'liquidityNeeds',
+  ageRange: 'ageRange',
+  investmentKnowledge: 'investmentKnowledge',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InvestmentObjectivesScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  primaryGoal: 'primaryGoal',
+  specificGoals: 'specificGoals',
+  targetAmount: 'targetAmount',
+  timeHorizon: 'timeHorizon',
+  monthlyContribution: 'monthlyContribution',
+  riskComfort: 'riskComfort',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AccountTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  taxAdvantaged: 'taxAdvantaged',
+  minimumBalance: 'minimumBalance',
+  annualFee: 'annualFee',
+  transactionFee: 'transactionFee',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DisclosureScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  required: 'required',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ComplianceAgreementScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  disclosureId: 'disclosureId',
+  acknowledged: 'acknowledged',
+  acknowledgedAt: 'acknowledgedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
 };
 
 
@@ -175,8 +275,14 @@ exports.Prisma.ModelName = {
   Token: 'Token',
   Client: 'Client',
   Activity: 'Activity',
+  Document: 'Document',
   DocumentType: 'DocumentType',
-  Document: 'Document'
+  OnboardingData: 'OnboardingData',
+  RiskAssessment: 'RiskAssessment',
+  InvestmentObjectives: 'InvestmentObjectives',
+  AccountType: 'AccountType',
+  Disclosure: 'Disclosure',
+  ComplianceAgreement: 'ComplianceAgreement'
 };
 /**
  * Create the Client
@@ -225,13 +331,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id              Int      @id @default(autoincrement())\n  email           String   @unique\n  name            String?\n  password        String\n  role            String   @default(\"USER\")\n  isEmailVerified Boolean  @default(false)\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  tokens          Token[]\n  clients         Client[]\n}\n\nmodel Token {\n  id          Int      @id @default(autoincrement())\n  token       String\n  type        String\n  expires     DateTime\n  blacklisted Boolean\n  createdAt   DateTime @default(now())\n  user        User     @relation(fields: [userId], references: [id])\n  userId      Int\n}\n\nmodel Client {\n  id           String   @id @default(cuid())\n  firstName    String\n  lastName     String\n  email        String   @unique\n  phone        String\n  status       String   @default(\"pending\")\n  progress     Int      @default(0)\n  riskProfile  String?\n  accountValue Float?\n  firmId       String\n  createdAt    DateTime @default(now())\n  updatedAt    DateTime @updatedAt\n  user         User     @relation(fields: [userId], references: [id])\n  userId       Int\n}\n\nmodel Activity {\n  id          String   @id @default(cuid())\n  type        String\n  clientName  String\n  description String\n  timestamp   DateTime @default(now())\n  clientId    String?\n}\n\nmodel DocumentType {\n  id              String     @id @default(cuid())\n  name            String     @unique\n  description     String\n  required        Boolean    @default(true)\n  category        String\n  acceptedFormats String\n  maxFileSize     Int\n  documents       Document[]\n}\n\nmodel Document {\n  id              String       @id @default(cuid())\n  fileName        String\n  fileSize        Int\n  fileType        String\n  documentTypeId  String\n  clientId        String\n  status          String       @default(\"pending\")\n  signedUrl       String?\n  uploadedAt      DateTime     @default(now())\n  verifiedAt      DateTime?\n  rejectionReason String?\n  documentType    DocumentType @relation(fields: [documentTypeId], references: [id])\n}\n",
-  "inlineSchemaHash": "a06f2955fd0d2cef1ff66c2f5259373813e6de59ead9b8cdaaaae99300a15442",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id              Int      @id @default(autoincrement())\n  email           String   @unique\n  name            String?\n  password        String\n  role            String   @default(\"USER\")\n  isEmailVerified Boolean  @default(false)\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  tokens          Token[]\n  clients         Client[]\n}\n\nmodel Token {\n  id          Int      @id @default(autoincrement())\n  token       String\n  type        String\n  expires     DateTime\n  blacklisted Boolean\n  createdAt   DateTime @default(now())\n  user        User     @relation(fields: [userId], references: [id])\n  userId      Int\n}\n\nmodel Client {\n  id                   String                @id @default(cuid())\n  firstName            String\n  lastName             String\n  email                String                @unique\n  phone                String\n  status               String                @default(\"pending\")\n  progress             Int                   @default(0)\n  riskProfile          String?\n  accountValue         Float?\n  firmId               String\n  createdAt            DateTime              @default(now())\n  updatedAt            DateTime              @updatedAt\n  user                 User                  @relation(fields: [userId], references: [id])\n  userId               Int\n  documents            Document[]\n  activities           Activity[]\n  onboardingData       OnboardingData?\n  riskAssessment       RiskAssessment?\n  investmentObjectives InvestmentObjectives?\n  complianceAgreements ComplianceAgreement[]\n}\n\nmodel Activity {\n  id          String   @id @default(cuid())\n  type        String\n  clientName  String\n  description String\n  timestamp   DateTime @default(now())\n  clientId    String?\n  client      Client?  @relation(fields: [clientId], references: [id])\n}\n\nmodel Document {\n  id              String       @id @default(cuid())\n  fileName        String\n  fileSize        Int\n  fileType        String\n  documentTypeId  String\n  clientId        String\n  status          String       @default(\"pending\")\n  signedUrl       String?\n  uploadedAt      DateTime     @default(now())\n  verifiedAt      DateTime?\n  rejectionReason String?\n  documentType    DocumentType @relation(fields: [documentTypeId], references: [id])\n  client          Client       @relation(fields: [clientId], references: [id])\n}\n\nmodel DocumentType {\n  id              String     @id @default(cuid())\n  name            String     @unique\n  description     String\n  required        Boolean    @default(true)\n  category        String\n  acceptedFormats String // Comma-separated string of accepted MIME type formats\n  maxFileSize     Int\n  documents       Document[]\n}\n\nmodel OnboardingData {\n  id                   String    @id @default(cuid())\n  clientId             String    @unique\n  personalInfo         Json\n  contactInfo          Json?\n  employmentInfo       Json?\n  riskProfile          Json?\n  investmentObjectives Json?\n  financialGoals       Json // JSON string containing array of goals\n  selectedAccountTypes Json // JSON string containing array of account types\n  fundingMethods       Json // JSON string containing array of funding methods\n  uploadedDocuments    Json // JSON string containing array of documents\n  disclosures          Json // JSON string containing array of disclosures\n  complianceRecords    Json // JSON string containing array of compliance records\n  status               String    @default(\"draft\")\n  currentStep          Int       @default(1)\n  totalSteps           Int       @default(7)\n  submittedAt          DateTime?\n  reviewedAt           DateTime?\n  createdAt            DateTime  @default(now())\n  updatedAt            DateTime  @updatedAt\n  client               Client    @relation(fields: [clientId], references: [id])\n}\n\nmodel RiskAssessment {\n  id                    String   @id @default(cuid())\n  clientId              String   @unique\n  investmentExperience  String\n  riskTolerance         String\n  investmentTimeHorizon String\n  liquidityNeeds        String\n  ageRange              String\n  investmentKnowledge   String\n  createdAt             DateTime @default(now())\n  updatedAt             DateTime @updatedAt\n  client                Client   @relation(fields: [clientId], references: [id])\n}\n\nmodel InvestmentObjectives {\n  id                  String   @id @default(cuid())\n  clientId            String   @unique\n  primaryGoal         String\n  specificGoals       Json // JSON string containing array of goals\n  targetAmount        Float?\n  timeHorizon         Int\n  monthlyContribution Float?\n  riskComfort         Int\n  createdAt           DateTime @default(now())\n  updatedAt           DateTime @updatedAt\n  client              Client   @relation(fields: [clientId], references: [id])\n}\n\nmodel AccountType {\n  id             String   @id @default(cuid())\n  name           String   @unique\n  description    String\n  taxAdvantaged  Boolean  @default(false)\n  minimumBalance Float    @default(0)\n  annualFee      Float    @default(0)\n  transactionFee Float    @default(0)\n  createdAt      DateTime @default(now())\n  updatedAt      DateTime @updatedAt\n}\n\nmodel Disclosure {\n  id                   String                @id @default(cuid())\n  title                String\n  content              String\n  required             Boolean               @default(true)\n  createdAt            DateTime              @default(now())\n  updatedAt            DateTime              @updatedAt\n  complianceAgreements ComplianceAgreement[]\n}\n\nmodel ComplianceAgreement {\n  id             String     @id @default(cuid())\n  clientId       String\n  disclosureId   String\n  acknowledged   Boolean    @default(false)\n  acknowledgedAt DateTime?\n  createdAt      DateTime   @default(now())\n  updatedAt      DateTime   @updatedAt\n  client         Client     @relation(fields: [clientId], references: [id])\n  disclosure     Disclosure @relation(fields: [disclosureId], references: [id])\n\n  @@unique([clientId, disclosureId])\n}\n",
+  "inlineSchemaHash": "1caba531bd12bb81551ce61e7aa6d0188b4f1ec2b3c83d2c911467054160ffad",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isEmailVerified\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tokens\",\"kind\":\"object\",\"type\":\"Token\",\"relationName\":\"TokenToUser\"},{\"name\":\"clients\",\"kind\":\"object\",\"type\":\"Client\",\"relationName\":\"ClientToUser\"}],\"dbName\":null},\"Token\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"blacklisted\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TokenToUser\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"Int\"}],\"dbName\":null},\"Client\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"firstName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"progress\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"riskProfile\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"accountValue\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"firmId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ClientToUser\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"Int\"}],\"dbName\":null},\"Activity\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clientName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"timestamp\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"clientId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"DocumentType\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"required\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"acceptedFormats\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"maxFileSize\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"documents\",\"kind\":\"object\",\"type\":\"Document\",\"relationName\":\"DocumentToDocumentType\"}],\"dbName\":null},\"Document\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileSize\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"fileType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"documentTypeId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"signedUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"uploadedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"verifiedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"rejectionReason\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"documentType\",\"kind\":\"object\",\"type\":\"DocumentType\",\"relationName\":\"DocumentToDocumentType\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isEmailVerified\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tokens\",\"kind\":\"object\",\"type\":\"Token\",\"relationName\":\"TokenToUser\"},{\"name\":\"clients\",\"kind\":\"object\",\"type\":\"Client\",\"relationName\":\"ClientToUser\"}],\"dbName\":null},\"Token\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"blacklisted\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TokenToUser\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"Int\"}],\"dbName\":null},\"Client\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"firstName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"progress\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"riskProfile\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"accountValue\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"firmId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ClientToUser\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"documents\",\"kind\":\"object\",\"type\":\"Document\",\"relationName\":\"ClientToDocument\"},{\"name\":\"activities\",\"kind\":\"object\",\"type\":\"Activity\",\"relationName\":\"ActivityToClient\"},{\"name\":\"onboardingData\",\"kind\":\"object\",\"type\":\"OnboardingData\",\"relationName\":\"ClientToOnboardingData\"},{\"name\":\"riskAssessment\",\"kind\":\"object\",\"type\":\"RiskAssessment\",\"relationName\":\"ClientToRiskAssessment\"},{\"name\":\"investmentObjectives\",\"kind\":\"object\",\"type\":\"InvestmentObjectives\",\"relationName\":\"ClientToInvestmentObjectives\"},{\"name\":\"complianceAgreements\",\"kind\":\"object\",\"type\":\"ComplianceAgreement\",\"relationName\":\"ClientToComplianceAgreement\"}],\"dbName\":null},\"Activity\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clientName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"timestamp\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"clientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"client\",\"kind\":\"object\",\"type\":\"Client\",\"relationName\":\"ActivityToClient\"}],\"dbName\":null},\"Document\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileSize\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"fileType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"documentTypeId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"signedUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"uploadedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"verifiedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"rejectionReason\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"documentType\",\"kind\":\"object\",\"type\":\"DocumentType\",\"relationName\":\"DocumentToDocumentType\"},{\"name\":\"client\",\"kind\":\"object\",\"type\":\"Client\",\"relationName\":\"ClientToDocument\"}],\"dbName\":null},\"DocumentType\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"required\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"acceptedFormats\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"maxFileSize\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"documents\",\"kind\":\"object\",\"type\":\"Document\",\"relationName\":\"DocumentToDocumentType\"}],\"dbName\":null},\"OnboardingData\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"personalInfo\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"contactInfo\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"employmentInfo\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"riskProfile\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"investmentObjectives\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"financialGoals\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"selectedAccountTypes\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"fundingMethods\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"uploadedDocuments\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"disclosures\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"complianceRecords\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"currentStep\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"totalSteps\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"submittedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"reviewedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"client\",\"kind\":\"object\",\"type\":\"Client\",\"relationName\":\"ClientToOnboardingData\"}],\"dbName\":null},\"RiskAssessment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"investmentExperience\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"riskTolerance\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"investmentTimeHorizon\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"liquidityNeeds\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ageRange\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"investmentKnowledge\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"client\",\"kind\":\"object\",\"type\":\"Client\",\"relationName\":\"ClientToRiskAssessment\"}],\"dbName\":null},\"InvestmentObjectives\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"primaryGoal\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"specificGoals\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"targetAmount\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"timeHorizon\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"monthlyContribution\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"riskComfort\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"client\",\"kind\":\"object\",\"type\":\"Client\",\"relationName\":\"ClientToInvestmentObjectives\"}],\"dbName\":null},\"AccountType\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"taxAdvantaged\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"minimumBalance\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"annualFee\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"transactionFee\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Disclosure\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"required\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"complianceAgreements\",\"kind\":\"object\",\"type\":\"ComplianceAgreement\",\"relationName\":\"ComplianceAgreementToDisclosure\"}],\"dbName\":null},\"ComplianceAgreement\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"disclosureId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"acknowledged\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"acknowledgedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"client\",\"kind\":\"object\",\"type\":\"Client\",\"relationName\":\"ClientToComplianceAgreement\"},{\"name\":\"disclosure\",\"kind\":\"object\",\"type\":\"Disclosure\",\"relationName\":\"ComplianceAgreementToDisclosure\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

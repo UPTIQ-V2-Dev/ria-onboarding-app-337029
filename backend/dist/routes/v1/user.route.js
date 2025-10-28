@@ -8,7 +8,7 @@ const router = express.Router();
 router
     .route('/')
     .post(auth('manageUsers'), validate(userValidation.createUser), userController.createUser)
-    .get(auth('getUsers'), validate(userValidation.getUsers), userController.getUsers);
+    .get(auth('manageUsers'), validate(userValidation.getUsers), userController.getUsers);
 router
     .route('/:userId')
     .get(auth(), validate(userValidation.getUser), userController.getUser)
@@ -55,12 +55,12 @@ export default router;
  *                 description: At least one number and one letter
  *               role:
  *                  type: string
- *                  enum: [user, admin]
+ *                  enum: [USER, ADMIN]
  *             example:
  *               name: fake name
  *               email: fake@example.com
  *               password: password1
- *               role: user
+ *               role: USER
  *     responses:
  *       "201":
  *         description: Created
@@ -142,7 +142,7 @@ export default router;
  */
 /**
  * @swagger
- * /users/{id}:
+ * /users/{userId}:
  *   get:
  *     summary: Get a user
  *     description: Logged in users can fetch only their own user information. Only admins can fetch other users.
@@ -151,10 +151,10 @@ export default router;
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: userId
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *         description: User id
  *     responses:
  *       "200":
@@ -178,10 +178,10 @@ export default router;
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: userId
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *         description: User id
  *     requestBody:
  *       required: true
@@ -229,13 +229,13 @@ export default router;
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: userId
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *         description: User id
  *     responses:
- *       "200":
+ *       "204":
  *         description: No content
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'

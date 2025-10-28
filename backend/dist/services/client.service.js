@@ -197,6 +197,63 @@ const deleteClientById = async (clientId) => {
     await prisma.client.delete({ where: { id: client.id } });
     return client;
 };
+/**
+ * Update status for multiple clients simultaneously
+ * @param {string[]} clientIds - Array of client IDs
+ * @param {string} status - New status to apply
+ * @param {number} userId - User ID to ensure clients belong to user
+ * @returns {Promise<{updatedCount: number, clients: Client[]}>}
+ */
+const bulkUpdateStatus = async (clientIds, status, userId) => {
+    // First, validate that all clients exist and belong to the user
+    const existingClients = await prisma.client.findMany({
+        where: {
+            id: { in: clientIds },
+            userId
+        }
+    });
+    if (existingClients.length !== clientIds.length) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'One or more clients not found or access denied');
+    }
+    // Update the clients
+    await prisma.client.updateMany({
+        where: {
+            id: { in: clientIds },
+            userId
+        },
+        data: {
+            status,
+            updatedAt: new Date()
+        }
+    });
+    // Fetch the updated clients
+    const updatedClients = await prisma.client.findMany({
+        where: {
+            id: { in: clientIds },
+            userId
+        },
+        orderBy: { updatedAt: 'desc' }
+    });
+    return {
+        updatedCount: updatedClients.length,
+        clients: updatedClients
+    };
+};
+/**
+ * Export clients data for CSV/Excel download
+ * @param {object} filter - Filter criteria
+ * @param {number} userId - User ID to filter clients by
+ * @returns {Promise<Client[]>}
+ */
+const exportClients = async (filter, userId) => {
+    return await prisma.client.findMany({
+        where: {
+            ...filter,
+            userId
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+};
 export default {
     createClient,
     queryClients,
@@ -205,5 +262,7 @@ export default {
     getClientByEmail,
     getClientsByUserId,
     updateClientById,
-    deleteClientById
+    deleteClientById,
+    bulkUpdateStatus,
+    exportClients
 };

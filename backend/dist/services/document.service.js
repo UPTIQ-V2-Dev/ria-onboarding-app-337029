@@ -251,6 +251,57 @@ const markDocumentAsUploaded = async (documentId) => {
     return await updateDocumentStatus(documentId, { status: 'uploaded' });
 };
 /**
+ * Upload document with multipart form data
+ * @param {Object} uploadData - Upload data containing file and metadata
+ * @returns {Promise<Document & {documentType: DocumentTypeResponse}>}
+ */
+const uploadDocument = async (uploadData) => {
+    const { file, clientId, documentTypeId } = uploadData;
+    // Validate document type exists
+    const documentType = await getDocumentTypeById(documentTypeId);
+    if (!documentType) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'Document type not found');
+    }
+    // Validate client exists
+    const client = await prisma.client.findUnique({
+        where: { id: clientId }
+    });
+    if (!client) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'Client not found');
+    }
+    // Validate file type using file.mimetype
+    const fileType = file.mimetype;
+    if (!isFileTypeSupported(fileType, documentType.acceptedFormats)) {
+        throw new ApiError(httpStatus.UNSUPPORTED_MEDIA_TYPE, `File type ${fileType} is not supported for ${documentType.name}. Accepted formats: ${documentType.acceptedFormats.replace(/,/g, ', ')}`);
+    }
+    // Validate file size
+    if (!isFileSizeAcceptable(file.size, documentType.maxFileSize)) {
+        throw new ApiError(413, `File size exceeds maximum allowed size of ${documentType.maxFileSize} bytes`);
+    }
+    // In a real implementation, you would upload the file to cloud storage here
+    // For now, we'll simulate this by generating a signed URL
+    const signedUrl = await generateDownloadSignedUrl(file.filename || file.originalname, file.originalname);
+    // Create document record with 'pending' status
+    const document = await prisma.document.create({
+        data: {
+            fileName: file.originalname,
+            fileSize: file.size,
+            fileType: fileType,
+            documentTypeId: documentTypeId,
+            clientId: clientId,
+            status: 'pending',
+            signedUrl
+        },
+        include: {
+            documentType: true
+        }
+    });
+    return {
+        ...document,
+        documentType: transformDocumentType(document.documentType)
+    };
+};
+/**
  * Analyze bank statement document and get treasury recommendations
  * @param {string} documentId
  * @returns {Promise<{recommendations: {product: string, description: string, reasoning: string, priority: string}[]}>}
@@ -317,5 +368,6 @@ export default {
     updateDocumentStatus,
     deleteDocumentById,
     markDocumentAsUploaded,
+    uploadDocument,
     analyzeDocument
 };

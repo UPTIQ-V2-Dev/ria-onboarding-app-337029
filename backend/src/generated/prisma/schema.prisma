@@ -39,20 +39,26 @@ model Token {
 }
 
 model Client {
-  id           String   @id @default(cuid())
-  firstName    String
-  lastName     String
-  email        String   @unique
-  phone        String
-  status       String   @default("pending")
-  progress     Int      @default(0)
-  riskProfile  String?
-  accountValue Float?
-  firmId       String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id])
-  userId       Int
+  id                   String                @id @default(cuid())
+  firstName            String
+  lastName             String
+  email                String                @unique
+  phone                String
+  status               String                @default("pending")
+  progress             Int                   @default(0)
+  riskProfile          String?
+  accountValue         Float?
+  firmId               String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  user                 User                  @relation(fields: [userId], references: [id])
+  userId               Int
+  documents            Document[]
+  activities           Activity[]
+  onboardingData       OnboardingData?
+  riskAssessment       RiskAssessment?
+  investmentObjectives InvestmentObjectives?
+  complianceAgreements ComplianceAgreement[]
 }
 
 model Activity {
@@ -62,17 +68,7 @@ model Activity {
   description String
   timestamp   DateTime @default(now())
   clientId    String?
-}
-
-model DocumentType {
-  id              String     @id @default(cuid())
-  name            String     @unique
-  description     String
-  required        Boolean    @default(true)
-  category        String
-  acceptedFormats String
-  maxFileSize     Int
-  documents       Document[]
+  client      Client?  @relation(fields: [clientId], references: [id])
 }
 
 model Document {
@@ -88,4 +84,104 @@ model Document {
   verifiedAt      DateTime?
   rejectionReason String?
   documentType    DocumentType @relation(fields: [documentTypeId], references: [id])
+  client          Client       @relation(fields: [clientId], references: [id])
+}
+
+model DocumentType {
+  id              String     @id @default(cuid())
+  name            String     @unique
+  description     String
+  required        Boolean    @default(true)
+  category        String
+  acceptedFormats String // Comma-separated string of accepted MIME type formats
+  maxFileSize     Int
+  documents       Document[]
+}
+
+model OnboardingData {
+  id                   String    @id @default(cuid())
+  clientId             String    @unique
+  personalInfo         Json
+  contactInfo          Json?
+  employmentInfo       Json?
+  riskProfile          Json?
+  investmentObjectives Json?
+  financialGoals       Json // JSON string containing array of goals
+  selectedAccountTypes Json // JSON string containing array of account types
+  fundingMethods       Json // JSON string containing array of funding methods
+  uploadedDocuments    Json // JSON string containing array of documents
+  disclosures          Json // JSON string containing array of disclosures
+  complianceRecords    Json // JSON string containing array of compliance records
+  status               String    @default("draft")
+  currentStep          Int       @default(1)
+  totalSteps           Int       @default(7)
+  submittedAt          DateTime?
+  reviewedAt           DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  client               Client    @relation(fields: [clientId], references: [id])
+}
+
+model RiskAssessment {
+  id                    String   @id @default(cuid())
+  clientId              String   @unique
+  investmentExperience  String
+  riskTolerance         String
+  investmentTimeHorizon String
+  liquidityNeeds        String
+  ageRange              String
+  investmentKnowledge   String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  client                Client   @relation(fields: [clientId], references: [id])
+}
+
+model InvestmentObjectives {
+  id                  String   @id @default(cuid())
+  clientId            String   @unique
+  primaryGoal         String
+  specificGoals       Json // JSON string containing array of goals
+  targetAmount        Float?
+  timeHorizon         Int
+  monthlyContribution Float?
+  riskComfort         Int
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  client              Client   @relation(fields: [clientId], references: [id])
+}
+
+model AccountType {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  description    String
+  taxAdvantaged  Boolean  @default(false)
+  minimumBalance Float    @default(0)
+  annualFee      Float    @default(0)
+  transactionFee Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Disclosure {
+  id                   String                @id @default(cuid())
+  title                String
+  content              String
+  required             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  complianceAgreements ComplianceAgreement[]
+}
+
+model ComplianceAgreement {
+  id             String     @id @default(cuid())
+  clientId       String
+  disclosureId   String
+  acknowledged   Boolean    @default(false)
+  acknowledgedAt DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  client         Client     @relation(fields: [clientId], references: [id])
+  disclosure     Disclosure @relation(fields: [disclosureId], references: [id])
+
+  @@unique([clientId, disclosureId])
 }

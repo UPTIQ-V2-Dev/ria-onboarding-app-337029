@@ -17,6 +17,14 @@ router
     .get(auth('getClients'), validate(clientValidation.getRecentClients), clientController.getRecentClients);
 
 router
+    .route('/bulk-status')
+    .put(auth('manageClients'), validate(clientValidation.bulkUpdateStatus), clientController.bulkUpdateStatus);
+
+router
+    .route('/export')
+    .get(auth('getClients'), validate(clientValidation.exportClients), clientController.exportClients);
+
+router
     .route('/:clientId')
     .get(auth('getClients'), validate(clientValidation.getClient), clientController.getClient)
     .patch(auth('manageClients'), validate(clientValidation.updateClient), clientController.updateClient)
@@ -177,9 +185,20 @@ export default router;
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Client'
+ *               type: object
+ *               properties:
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Client'
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *                 totalResults:
+ *                   type: integer
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
@@ -215,6 +234,120 @@ export default router;
  *                 $ref: '#/components/schemas/Client'
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
+ */
+
+/**
+ * @swagger
+ * /clients/bulk-status:
+ *   put:
+ *     summary: Update status for multiple clients
+ *     description: Update status for multiple clients simultaneously.
+ *     tags: [Clients]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - clientIds
+ *               - status
+ *             properties:
+ *               clientIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 minItems: 1
+ *                 maxItems: 100
+ *                 description: Array of client IDs to update
+ *               status:
+ *                 type: string
+ *                 enum: [pending, in_progress, completed, rejected]
+ *                 description: New status to apply to all clients
+ *             example:
+ *               clientIds: ["client-123", "client-456"]
+ *               status: "in_progress"
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 updatedCount:
+ *                   type: integer
+ *                   description: Number of clients updated
+ *                 clients:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Client'
+ *       "400":
+ *         $ref: '#/components/responses/BadRequest'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "404":
+ *         $ref: '#/components/responses/NotFound'
+ */
+
+/**
+ * @swagger
+ * /clients/export:
+ *   get:
+ *     summary: Export client data
+ *     description: Export client data as CSV or Excel file.
+ *     tags: [Clients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, in_progress, completed, rejected]
+ *         description: Filter by client status
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search in client name and email
+ *       - in: query
+ *         name: riskProfile
+ *         schema:
+ *           type: string
+ *           enum: [conservative, moderate, aggressive]
+ *         description: Filter by risk profile
+ *       - in: query
+ *         name: firmId
+ *         schema:
+ *           type: string
+ *         description: Filter by firm ID
+ *       - in: query
+ *         name: format
+ *         schema:
+ *           type: string
+ *           enum: [csv, excel]
+ *         default: csv
+ *         description: Export format
+ *     responses:
+ *       "200":
+ *         description: File downloaded
+ *         content:
+ *           text/csv:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Client'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "400":
+ *         $ref: '#/components/responses/BadRequest'
  */
 
 /**

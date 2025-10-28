@@ -1,10 +1,15 @@
 import logger from '../config/logger.ts';
 import { JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_REQUEST } from '../constants/jsonrpc.constants.ts';
 import { registerMCPTools } from '../services/mcp.service.ts';
+import { accountTools } from '../tools/account.tool.ts';
 import { activityTools } from '../tools/activity.tool.ts';
 import { clientTools } from '../tools/client.tool.ts';
+import { complianceTools } from '../tools/compliance.tool.ts';
 import { dashboardTools } from '../tools/dashboard.tool.ts';
 import { documentTools } from '../tools/document.tool.ts';
+import { investmentObjectivesTools } from '../tools/investment-objectives.tool.ts';
+import { onboardingTools } from '../tools/onboarding.tool.ts';
+import { riskAssessmentTools } from '../tools/risk-assessment.tool.ts';
 import { userTools } from '../tools/user.tool.ts';
 import catchAsync from '../utils/catchAsync.ts';
 import { Server } from '@modelcontextprotocol/sdk/server';
@@ -59,7 +64,18 @@ export const mcpPostController = catchAsync(async (req: Request, res: Response) 
 
             registerMCPTools({
                 server,
-                tools: [...userTools, ...clientTools, ...dashboardTools, ...activityTools, ...documentTools]
+                tools: [
+                    ...userTools,
+                    ...clientTools,
+                    ...dashboardTools,
+                    ...activityTools,
+                    ...documentTools,
+                    ...onboardingTools,
+                    ...riskAssessmentTools,
+                    ...investmentObjectivesTools,
+                    ...accountTools,
+                    ...complianceTools
+                ]
             });
             await server.connect(transport);
             logger.info('MCP server connected successfully');

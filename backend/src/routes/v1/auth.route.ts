@@ -16,7 +16,12 @@ router.post('/reset-password', validate(authValidation.resetPassword), authContr
 router.post('/verify-email', validate(authValidation.verifyEmail), authController.verifyEmail);
 
 // Authenticated route
-router.post('/send-verification-email', auth(), authController.sendVerificationEmail);
+router.post(
+    '/send-verification-email',
+    auth(),
+    validate(authValidation.sendVerificationEmail),
+    authController.sendVerificationEmail
+);
 
 export default router;
 
@@ -110,7 +115,7 @@ export default router;
  * @swagger
  * /auth/login:
  *   post:
- *     summary: Login
+ *     summary: Authenticate user and return access tokens
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -129,8 +134,8 @@ export default router;
  *                 type: string
  *                 format: password
  *             example:
- *               email: fake@example.com
- *               password: password1
+ *               email: user@example.com
+ *               password: password123
  *     responses:
  *       "200":
  *         description: OK
@@ -140,25 +145,53 @@ export default router;
  *               type: object
  *               properties:
  *                 user:
- *                   $ref: '#/components/schemas/User'
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                       nullable: true
+ *                     role:
+ *                       type: string
+ *                     isEmailVerified:
+ *                       type: boolean
+ *                     createdAt:
+ *                       type: string
+ *                     updatedAt:
+ *                       type: string
  *                 tokens:
- *                   $ref: '#/components/schemas/AuthTokens'
+ *                   type: object
+ *                   properties:
+ *                     access:
+ *                       type: object
+ *                       properties:
+ *                         token:
+ *                           type: string
+ *                         expires:
+ *                           type: string
+ *                     refresh:
+ *                       type: object
+ *                       properties:
+ *                         token:
+ *                           type: string
+ *                         expires:
+ *                           type: string
  *       "401":
  *         description: Invalid email or password
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *             example:
- *               code: 401
- *               message: Invalid email or password
+ *       "400":
+ *         description: Invalid input
+ *       "500":
+ *         description: Internal server error
  */
 
 /**
  * @swagger
  * /auth/logout:
  *   post:
- *     summary: Logout
+ *     summary: Invalidate user refresh token and logout
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -172,19 +205,23 @@ export default router;
  *               refreshToken:
  *                 type: string
  *             example:
- *               refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZWJhYzUzNDk1NGI1NDEzOTgwNmMxMTIiLCJpYXQiOjE1ODkyOTg0ODQsImV4cCI6MTU4OTMwMDI4NH0.m1U63blB0MLej_WfB7yC2FTMnCziif9X8yzwDEfJXAg
+ *               refreshToken: eyJhbGc..
  *     responses:
  *       "204":
  *         description: No content
  *       "404":
- *         $ref: '#/components/responses/NotFound'
+ *         description: Refresh token not found
+ *       "400":
+ *         description: Invalid refresh token
+ *       "500":
+ *         description: Internal server error
  */
 
 /**
  * @swagger
  * /auth/refresh-tokens:
  *   post:
- *     summary: Refresh auth tokens
+ *     summary: Generate new access and refresh tokens
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -198,24 +235,42 @@ export default router;
  *               refreshToken:
  *                 type: string
  *             example:
- *               refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZWJhYzUzNDk1NGI1NDEzOTgwNmMxMTIiLCJpYXQiOjE1ODkyOTg0ODQsImV4cCI6MTU4OTMwMDI4NH0.m1U63blB0MLej_WfB7yC2FTMnCziif9X8yzwDEfJXAg
+ *               refreshToken: eyJhbGc..
  *     responses:
  *       "200":
  *         description: OK
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/AuthTokens'
+ *               type: object
+ *               properties:
+ *                 access:
+ *                   type: object
+ *                   properties:
+ *                     token:
+ *                       type: string
+ *                     expires:
+ *                       type: string
+ *                 refresh:
+ *                   type: object
+ *                   properties:
+ *                     token:
+ *                       type: string
+ *                     expires:
+ *                       type: string
  *       "401":
- *         $ref: '#/components/responses/Unauthorized'
+ *         description: Invalid refresh token
+ *       "400":
+ *         description: Invalid input
+ *       "500":
+ *         description: Internal server error
  */
 
 /**
  * @swagger
  * /auth/forgot-password:
  *   post:
- *     summary: Forgot password
- *     description: An email will be sent to reset password.
+ *     summary: Send password reset email to user
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -230,19 +285,23 @@ export default router;
  *                 type: string
  *                 format: email
  *             example:
- *               email: fake@example.com
+ *               email: user@example.com
  *     responses:
  *       "204":
  *         description: No content
  *       "404":
- *         $ref: '#/components/responses/NotFound'
+ *         description: Email not found
+ *       "400":
+ *         description: Invalid email format
+ *       "500":
+ *         description: Internal server error
  */
 
 /**
  * @swagger
  * /auth/reset-password:
  *   post:
- *     summary: Reset password
+ *     summary: Reset user password using reset token
  *     tags: [Auth]
  *     parameters:
  *       - in: query
@@ -266,27 +325,23 @@ export default router;
  *                 minLength: 8
  *                 description: At least one number and one letter
  *             example:
- *               password: password1
+ *               password: newPassword123
  *     responses:
  *       "204":
  *         description: No content
  *       "401":
- *         description: Password reset failed
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *             example:
- *               code: 401
- *               message: Password reset failed
+ *         description: Invalid or expired token
+ *       "400":
+ *         description: Invalid password format
+ *       "500":
+ *         description: Internal server error
  */
 
 /**
  * @swagger
  * /auth/send-verification-email:
  *   post:
- *     summary: Send verification email
- *     description: An email will be sent to verify email.
+ *     summary: Send email verification link to authenticated user
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -294,14 +349,16 @@ export default router;
  *       "204":
  *         description: No content
  *       "401":
- *         $ref: '#/components/responses/Unauthorized'
+ *         description: Unauthorized
+ *       "500":
+ *         description: Internal server error
  */
 
 /**
  * @swagger
  * /auth/verify-email:
  *   post:
- *     summary: verify email
+ *     summary: Verify user email address using verification token
  *     tags: [Auth]
  *     parameters:
  *       - in: query
@@ -314,12 +371,9 @@ export default router;
  *       "204":
  *         description: No content
  *       "401":
- *         description: verify email failed
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *             example:
- *               code: 401
- *               message: verify email failed
+ *         description: Invalid or expired token
+ *       "400":
+ *         description: Invalid token format
+ *       "500":
+ *         description: Internal server error
  */

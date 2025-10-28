@@ -213,6 +213,8 @@ const analyzeDocumentTool = {
         return await documentService.analyzeDocument(inputs.documentId);
     }
 };
+// Note: Upload tool is not included as it requires file handling which is not suitable for MCP
+// File uploads should be handled through the REST API endpoint /documents/upload
 export const documentTools = [
     getDocumentTypesTool,
     getDocumentTypeTool,

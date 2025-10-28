@@ -242,6 +242,9 @@ const analyzeDocumentTool: MCPTool = {
     }
 };
 
+// Note: Upload tool is not included as it requires file handling which is not suitable for MCP
+// File uploads should be handled through the REST API endpoint /documents/upload
+
 export const documentTools: MCPTool[] = [
     getDocumentTypesTool,
     getDocumentTypeTool,

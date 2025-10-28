@@ -1,5 +1,6 @@
 import { documentController } from "../../controllers/index.js";
 import auth from "../../middlewares/auth.js";
+import upload from "../../middlewares/upload.js";
 import validate from "../../middlewares/validate.js";
 import { documentValidation } from "../../validations/index.js";
 import express from 'express';
@@ -27,6 +28,14 @@ router
 router
     .route('/documents/:documentId/analyze')
     .post(auth(), validate(documentValidation.analyzeDocument), documentController.analyzeDocument);
+// File upload endpoint (multipart/form-data)
+router
+    .route('/documents/upload')
+    .post(auth(), upload.single('file'), validate(documentValidation.uploadDocument), documentController.uploadDocument);
+// Alternative endpoint for getting client documents
+router
+    .route('/documents/client/:clientId')
+    .get(auth(), validate(documentValidation.getClientDocumentsByParams), documentController.getClientDocumentsByParams);
 export default router;
 /**
  * @swagger
@@ -479,6 +488,149 @@ export default router;
  *         $ref: '#/components/responses/NotFound'
  *       "422":
  *         $ref: '#/components/responses/UnprocessableEntity'
+ *       "500":
+ *         $ref: '#/components/responses/InternalError'
+ */
+/**
+ * @swagger
+ * /documents/upload:
+ *   post:
+ *     summary: Upload document with multipart form data
+ *     description: Upload a document file using multipart/form-data
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *               - clientId
+ *               - documentTypeId
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: The document file to upload
+ *               clientId:
+ *                 type: string
+ *                 description: Client ID
+ *               documentTypeId:
+ *                 type: string
+ *                 description: Document type ID
+ *     responses:
+ *       "201":
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 documentTypeId:
+ *                   type: string
+ *                 fileName:
+ *                   type: string
+ *                 fileSize:
+ *                   type: integer
+ *                 mimeType:
+ *                   type: string
+ *                 uploadedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 status:
+ *                   type: string
+ *                 signedUrl:
+ *                   type: string
+ *                   nullable: true
+ *             example:
+ *               id: "doc-789"
+ *               documentTypeId: "bank_statement"
+ *               fileName: "document.pdf"
+ *               fileSize: 1048576
+ *               mimeType: "application/pdf"
+ *               uploadedAt: "2024-10-28T10:00:00Z"
+ *               status: "pending"
+ *               signedUrl: "https://storage.example.com/signed-url"
+ *       "400":
+ *         $ref: '#/components/responses/BadRequest'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "403":
+ *         $ref: '#/components/responses/Forbidden'
+ *       "413":
+ *         $ref: '#/components/responses/PayloadTooLarge'
+ *       "415":
+ *         $ref: '#/components/responses/UnsupportedMediaType'
+ *       "500":
+ *         $ref: '#/components/responses/InternalError'
+ */
+/**
+ * @swagger
+ * /documents/client/{clientId}:
+ *   get:
+ *     summary: Get all documents uploaded by a specific client during onboarding
+ *     description: Alternative endpoint to get client documents with simplified response format
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Client ID
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   documentTypeId:
+ *                     type: string
+ *                   fileName:
+ *                     type: string
+ *                   fileSize:
+ *                     type: integer
+ *                   mimeType:
+ *                     type: string
+ *                   uploadedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   status:
+ *                     type: string
+ *                   rejectionReason:
+ *                     type: string
+ *                     nullable: true
+ *                   signedUrl:
+ *                     type: string
+ *                     nullable: true
+ *             example:
+ *               - id: "doc-789"
+ *                 documentTypeId: "bank_statement"
+ *                 fileName: "statement.pdf"
+ *                 fileSize: 1048576
+ *                 mimeType: "application/pdf"
+ *                 uploadedAt: "2024-10-28T10:00:00Z"
+ *                 status: "pending"
+ *                 signedUrl: "https://storage.example.com/view-url"
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "403":
+ *         $ref: '#/components/responses/Forbidden'
+ *       "404":
+ *         $ref: '#/components/responses/NotFound'
  *       "500":
  *         $ref: '#/components/responses/InternalError'
  */

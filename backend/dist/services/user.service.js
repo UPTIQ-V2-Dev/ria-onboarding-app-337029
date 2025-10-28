@@ -10,7 +10,7 @@ import httpStatus from 'http-status';
  */
 const createUser = async (email, password, name, role = Role.USER) => {
     if (await getUserByEmail(email)) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid input or email already exists');
     }
     return prisma.user.create({
         data: {
@@ -104,7 +104,7 @@ const updateUserById = async (userId, updateBody, keys = ['id', 'email', 'name',
     if (updateBody.email && updateBody.email !== user.email) {
         const existingUser = await getUserByEmail(updateBody.email);
         if (existingUser) {
-            throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid input or email already exists');
         }
     }
     // Encrypt password if provided
