@@ -29,7 +29,7 @@ const createClient = async (clientData, userId) => {
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
  * @param {number} [options.page] - Current page (default = 1)
- * @returns {Promise<Client[]>}
+ * @returns {Promise<{results: Client[], page: number, limit: number, totalPages: number, totalResults: number}>}
  */
 const queryClients = async (filter, options, keys = [
     'id',
@@ -50,14 +50,24 @@ const queryClients = async (filter, options, keys = [
     const limit = options.limit ?? 10;
     const sortBy = options.sortBy;
     const sortType = options.sortType ?? 'desc';
-    const clients = await prisma.client.findMany({
-        where: filter,
-        select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: sortBy ? { [sortBy]: sortType } : { updatedAt: 'desc' }
-    });
-    return clients;
+    const [clients, totalResults] = await Promise.all([
+        prisma.client.findMany({
+            where: filter,
+            select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: sortBy ? { [sortBy]: sortType } : { updatedAt: 'desc' }
+        }),
+        prisma.client.count({ where: filter })
+    ]);
+    const totalPages = Math.ceil(totalResults / limit);
+    return {
+        results: clients,
+        page,
+        limit,
+        totalPages,
+        totalResults
+    };
 };
 /**
  * Get recent clients (created or updated within last 30 days)

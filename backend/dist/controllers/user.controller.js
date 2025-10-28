@@ -1,4 +1,4 @@
-import { Role } from '../generated/prisma/index.js';
+import { Role } from "../config/constants.js";
 import { userService } from "../services/index.js";
 import ApiError from "../utils/ApiError.js";
 import catchAsyncWithAuth from "../utils/catchAsyncWithAuth.js";

@@ -38,13 +38,17 @@ const getActivitiesTool = {
         page: z.number().int().optional()
     }),
     outputSchema: z.object({
-        activities: z.array(activitySchema)
+        results: z.array(activitySchema),
+        page: z.number(),
+        limit: z.number(),
+        totalPages: z.number(),
+        totalResults: z.number()
     }),
     fn: async (inputs) => {
         const filter = pick(inputs, ['type', 'clientName', 'clientId']);
         const options = pick(inputs, ['sortBy', 'limit', 'page']);
         const result = await activityService.queryActivities(filter, options);
-        return { activities: result };
+        return result;
     }
 };
 const getActivityTool = {

@@ -3,13 +3,25 @@ import ApiError from "../utils/ApiError.js";
 import { generateDownloadSignedUrl, generateUploadSignedUrl, isFileSizeAcceptable, isFileTypeSupported } from "../utils/storage.js";
 import httpStatus from 'http-status';
 /**
+ * Transform DocumentType for API response with acceptedFormats as array
+ * @param {DocumentType} documentType
+ * @returns {DocumentTypeResponse}
+ */
+const transformDocumentType = (documentType) => {
+    return {
+        ...documentType,
+        acceptedFormats: documentType.acceptedFormats.split(',').map(format => format.trim())
+    };
+};
+/**
  * Get all document types
- * @returns {Promise<DocumentType[]>}
+ * @returns {Promise<DocumentTypeResponse[]>}
  */
 const getDocumentTypes = async () => {
-    return await prisma.documentType.findMany({
+    const documentTypes = await prisma.documentType.findMany({
         orderBy: [{ required: 'desc' }, { category: 'asc' }, { name: 'asc' }]
     });
+    return documentTypes.map(transformDocumentType);
 };
 /**
  * Get document type by ID
@@ -24,7 +36,7 @@ const getDocumentTypeById = async (documentTypeId) => {
 /**
  * Create a new document
  * @param {Object} documentData
- * @returns {Promise<{document: Document & {documentType: DocumentType}, signedUrl: string}>}
+ * @returns {Promise<{document: Document & {documentType: DocumentTypeResponse}, signedUrl: string}>}
  */
 const createDocument = async (documentData) => {
     // Validate document type exists
@@ -64,7 +76,13 @@ const createDocument = async (documentData) => {
             documentType: true
         }
     });
-    return { document, signedUrl };
+    return {
+        document: {
+            ...document,
+            documentType: transformDocumentType(document.documentType)
+        },
+        signedUrl
+    };
 };
 /**
  * Query documents with pagination and filtering
@@ -93,7 +111,10 @@ const queryDocuments = async (filter, options) => {
         orderBy: sortBy ? { [sortBy]: sortType } : { uploadedAt: 'desc' }
     });
     return {
-        results: documents,
+        results: documents.map(doc => ({
+            ...doc,
+            documentType: transformDocumentType(doc.documentType)
+        })),
         page,
         limit,
         totalPages,
@@ -112,12 +133,18 @@ const getDocumentById = async (documentId) => {
             documentType: true
         }
     });
-    if (document && document.status === 'uploaded') {
+    if (!document) {
+        return null;
+    }
+    if (document.status === 'uploaded') {
         // Generate download signed URL for uploaded documents
         const downloadUrl = await generateDownloadSignedUrl(document.id, document.fileName);
         document.signedUrl = downloadUrl;
     }
-    return document;
+    return {
+        ...document,
+        documentType: transformDocumentType(document.documentType)
+    };
 };
 /**
  * Get documents by client ID
@@ -139,13 +166,18 @@ const getDocumentsByClientId = async (clientId) => {
         },
         orderBy: [{ documentType: { required: 'desc' } }, { uploadedAt: 'desc' }]
     });
-    // Generate download URLs for uploaded documents
+    // Generate download URLs for uploaded documents and transform document types
+    const transformedDocuments = [];
     for (const document of documents) {
         if (document.status === 'uploaded' || document.status === 'verified') {
             document.signedUrl = await generateDownloadSignedUrl(document.id, document.fileName);
         }
+        transformedDocuments.push({
+            ...document,
+            documentType: transformDocumentType(document.documentType)
+        });
     }
-    return documents;
+    return transformedDocuments;
 };
 /**
  * Update document status
@@ -190,7 +222,10 @@ const updateDocumentStatus = async (documentId, updateData) => {
     if (updatedDocument.status === 'uploaded' || updatedDocument.status === 'verified') {
         updatedDocument.signedUrl = await generateDownloadSignedUrl(updatedDocument.id, updatedDocument.fileName);
     }
-    return updatedDocument;
+    return {
+        ...updatedDocument,
+        documentType: transformDocumentType(updatedDocument.documentType)
+    };
 };
 /**
  * Delete document by ID

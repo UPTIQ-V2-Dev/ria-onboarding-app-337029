@@ -9,14 +9,32 @@ import {
 } from '../utils/storage.ts';
 import httpStatus from 'http-status';
 
+// Type for DocumentType with acceptedFormats as string array for API responses
+type DocumentTypeResponse = Omit<DocumentType, 'acceptedFormats'> & {
+    acceptedFormats: string[];
+};
+
+/**
+ * Transform DocumentType for API response with acceptedFormats as array
+ * @param {DocumentType} documentType
+ * @returns {DocumentTypeResponse}
+ */
+const transformDocumentType = (documentType: DocumentType): DocumentTypeResponse => {
+    return {
+        ...documentType,
+        acceptedFormats: documentType.acceptedFormats.split(',').map(format => format.trim())
+    };
+};
+
 /**
  * Get all document types
- * @returns {Promise<DocumentType[]>}
+ * @returns {Promise<DocumentTypeResponse[]>}
  */
-const getDocumentTypes = async (): Promise<DocumentType[]> => {
-    return await prisma.documentType.findMany({
+const getDocumentTypes = async (): Promise<DocumentTypeResponse[]> => {
+    const documentTypes = await prisma.documentType.findMany({
         orderBy: [{ required: 'desc' }, { category: 'asc' }, { name: 'asc' }]
     });
+    return documentTypes.map(transformDocumentType);
 };
 
 /**
@@ -33,7 +51,7 @@ const getDocumentTypeById = async (documentTypeId: string): Promise<DocumentType
 /**
  * Create a new document
  * @param {Object} documentData
- * @returns {Promise<{document: Document & {documentType: DocumentType}, signedUrl: string}>}
+ * @returns {Promise<{document: Document & {documentType: DocumentTypeResponse}, signedUrl: string}>}
  */
 const createDocument = async (documentData: {
     fileName: string;
@@ -41,7 +59,7 @@ const createDocument = async (documentData: {
     fileType: string;
     documentTypeId: string;
     clientId: string;
-}): Promise<{ document: Document & { documentType: DocumentType }; signedUrl: string }> => {
+}): Promise<{ document: Document & { documentType: DocumentTypeResponse }; signedUrl: string }> => {
     // Validate document type exists
     const documentType = await getDocumentTypeById(documentData.documentTypeId);
     if (!documentType) {
@@ -88,7 +106,13 @@ const createDocument = async (documentData: {
         }
     });
 
-    return { document, signedUrl };
+    return {
+        document: {
+            ...document,
+            documentType: transformDocumentType(document.documentType)
+        },
+        signedUrl
+    };
 };
 
 /**
@@ -106,7 +130,7 @@ const queryDocuments = async (
         sortType?: 'asc' | 'desc';
     }
 ): Promise<{
-    results: (Document & { documentType: DocumentType })[];
+    results: (Document & { documentType: DocumentTypeResponse })[];
     page: number;
     limit: number;
     totalPages: number;
@@ -136,7 +160,10 @@ const queryDocuments = async (
     });
 
     return {
-        results: documents,
+        results: documents.map(doc => ({
+            ...doc,
+            documentType: transformDocumentType(doc.documentType)
+        })),
         page,
         limit,
         totalPages,
@@ -149,7 +176,9 @@ const queryDocuments = async (
  * @param {string} documentId
  * @returns {Promise<Document & {documentType: DocumentType} | null>}
  */
-const getDocumentById = async (documentId: string): Promise<(Document & { documentType: DocumentType }) | null> => {
+const getDocumentById = async (
+    documentId: string
+): Promise<(Document & { documentType: DocumentTypeResponse }) | null> => {
     const document = await prisma.document.findUnique({
         where: { id: documentId },
         include: {
@@ -157,13 +186,20 @@ const getDocumentById = async (documentId: string): Promise<(Document & { docume
         }
     });
 
-    if (document && document.status === 'uploaded') {
+    if (!document) {
+        return null;
+    }
+
+    if (document.status === 'uploaded') {
         // Generate download signed URL for uploaded documents
         const downloadUrl = await generateDownloadSignedUrl(document.id, document.fileName);
         document.signedUrl = downloadUrl;
     }
 
-    return document;
+    return {
+        ...document,
+        documentType: transformDocumentType(document.documentType)
+    };
 };
 
 /**
@@ -171,7 +207,9 @@ const getDocumentById = async (documentId: string): Promise<(Document & { docume
  * @param {string} clientId
  * @returns {Promise<(Document & {documentType: DocumentType})[]>}
  */
-const getDocumentsByClientId = async (clientId: string): Promise<(Document & { documentType: DocumentType })[]> => {
+const getDocumentsByClientId = async (
+    clientId: string
+): Promise<(Document & { documentType: DocumentTypeResponse })[]> => {
     // Validate client exists
     const client = await prisma.client.findUnique({
         where: { id: clientId }
@@ -188,14 +226,19 @@ const getDocumentsByClientId = async (clientId: string): Promise<(Document & { d
         orderBy: [{ documentType: { required: 'desc' } }, { uploadedAt: 'desc' }]
     });
 
-    // Generate download URLs for uploaded documents
+    // Generate download URLs for uploaded documents and transform document types
+    const transformedDocuments = [];
     for (const document of documents) {
         if (document.status === 'uploaded' || document.status === 'verified') {
             document.signedUrl = await generateDownloadSignedUrl(document.id, document.fileName);
         }
+        transformedDocuments.push({
+            ...document,
+            documentType: transformDocumentType(document.documentType)
+        });
     }
 
-    return documents;
+    return transformedDocuments;
 };
 
 /**
@@ -210,7 +253,7 @@ const updateDocumentStatus = async (
         status: string;
         rejectionReason?: string;
     }
-): Promise<Document & { documentType: DocumentType }> => {
+): Promise<Document & { documentType: DocumentTypeResponse }> => {
     const document = await getDocumentById(documentId);
     if (!document) {
         throw new ApiError(httpStatus.NOT_FOUND, 'Document not found');
@@ -255,7 +298,10 @@ const updateDocumentStatus = async (
         updatedDocument.signedUrl = await generateDownloadSignedUrl(updatedDocument.id, updatedDocument.fileName);
     }
 
-    return updatedDocument;
+    return {
+        ...updatedDocument,
+        documentType: transformDocumentType(updatedDocument.documentType)
+    };
 };
 
 /**
@@ -280,7 +326,9 @@ const deleteDocumentById = async (documentId: string): Promise<Document> => {
  * @param {string} documentId
  * @returns {Promise<Document & {documentType: DocumentType}>}
  */
-const markDocumentAsUploaded = async (documentId: string): Promise<Document & { documentType: DocumentType }> => {
+const markDocumentAsUploaded = async (
+    documentId: string
+): Promise<Document & { documentType: DocumentTypeResponse }> => {
     return await updateDocumentStatus(documentId, { status: 'uploaded' });
 };
 

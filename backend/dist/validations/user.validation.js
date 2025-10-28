@@ -1,4 +1,4 @@
-import { Role } from '../generated/prisma/index.js';
+import { Role } from "../config/constants.js";
 import { password } from "./custom.validation.js";
 import Joi from 'joi';
 const createUser = {
@@ -12,10 +12,10 @@ const createUser = {
 const getUsers = {
     query: Joi.object().keys({
         name: Joi.string(),
-        role: Joi.string(),
+        role: Joi.string().valid(Role.USER, Role.ADMIN),
         sortBy: Joi.string(),
-        limit: Joi.number().integer(),
-        page: Joi.number().integer()
+        limit: Joi.number().integer().min(1).default(10),
+        page: Joi.number().integer().min(1).default(1)
     })
 };
 const getUser = {

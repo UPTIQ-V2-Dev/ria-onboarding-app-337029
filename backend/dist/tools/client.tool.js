@@ -57,13 +57,17 @@ const getClientsTool = {
         page: z.number().int().min(1).optional()
     }),
     outputSchema: z.object({
-        clients: z.array(clientSchema)
+        results: z.array(clientSchema),
+        page: z.number(),
+        limit: z.number(),
+        totalPages: z.number(),
+        totalResults: z.number()
     }),
     fn: async (inputs) => {
         const filter = pick(inputs, ['firstName', 'lastName', 'email', 'status', 'riskProfile', 'firmId', 'userId']);
         const options = pick(inputs, ['sortBy', 'sortType', 'limit', 'page']);
         const result = await clientService.queryClients(filter, options);
-        return { clients: result };
+        return result;
     }
 };
 const getRecentClientsTool = {

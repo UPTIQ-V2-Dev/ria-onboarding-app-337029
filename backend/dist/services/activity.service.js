@@ -30,14 +30,35 @@ const queryActivities = async (filter, options, keys = ['id', 'type', 'clientNam
     const limit = options.limit ?? 10;
     const sortBy = options.sortBy;
     const sortType = options.sortType ?? 'desc';
+    // Create where clause for filtering
+    const where = {};
+    if (filter.type) {
+        where.type = { contains: filter.type };
+    }
+    if (filter.clientName) {
+        where.clientName = { contains: filter.clientName };
+    }
+    if (filter.clientId) {
+        where.clientId = filter.clientId;
+    }
+    // Get total count for pagination
+    const totalResults = await prisma.activity.count({ where });
+    const totalPages = Math.ceil(totalResults / limit);
+    // Get activities with pagination
     const activities = await prisma.activity.findMany({
-        where: filter,
+        where,
         select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
         skip: (page - 1) * limit,
         take: limit,
         orderBy: sortBy ? { [sortBy]: sortType } : { timestamp: 'desc' }
     });
-    return activities;
+    return {
+        results: activities,
+        page,
+        limit,
+        totalPages,
+        totalResults
+    };
 };
 /**
  * Get activity by id

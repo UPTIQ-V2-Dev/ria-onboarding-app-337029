@@ -7,7 +7,7 @@ const documentTypeSchema = z.object({
     description: z.string(),
     required: z.boolean(),
     category: z.string(),
-    acceptedFormats: z.string(),
+    acceptedFormats: z.array(z.string()),
     maxFileSize: z.number()
 });
 const documentSchema = z.object({

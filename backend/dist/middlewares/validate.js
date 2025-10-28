@@ -3,7 +3,7 @@ import pick from "../utils/pick.js";
 import httpStatus from 'http-status';
 import Joi from 'joi';
 const validate = (schema) => (req, res, next) => {
-    const validSchema = pick(schema, ['params', 'query', 'body']);
+    const validSchema = pick(schema, ['params', 'query', 'body', 'headers']);
     const obj = pick(req, Object.keys(validSchema));
     const { value, error } = Joi.compile(validSchema)
         .prefs({ errors: { label: 'key' }, abortEarly: false })
@@ -20,6 +20,10 @@ const validate = (schema) => (req, res, next) => {
     }
     if (value.query) {
         req.validatedQuery = value.query;
+    }
+    if (value.headers) {
+        // Headers validation passed, no need to replace since req.headers is read-only
+        // Validation ensures required headers are present
     }
     return next();
 };

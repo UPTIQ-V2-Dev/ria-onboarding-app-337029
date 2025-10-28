@@ -1,5 +1,5 @@
 import prisma from "../client.js";
-import { Role } from '../generated/prisma/index.js';
+import { Role } from "../config/constants.js";
 import ApiError from "../utils/ApiError.js";
 import { encryptPassword } from "../utils/encryption.js";
 import httpStatus from 'http-status';
@@ -23,7 +23,7 @@ const createUser = async (email, password, name, role = Role.USER) => {
 };
 /**
  * Query for users with pagination
- * @param {Object} filter - Prisma filter
+ * @param {Object} filter - Filter criteria
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
@@ -35,18 +35,28 @@ const queryUsers = async (filter, options, keys = ['id', 'email', 'name', 'role'
     const limit = options.limit ?? 10;
     const sortBy = options.sortBy;
     const sortType = options.sortType ?? 'desc';
+    // Build Prisma where clause
+    const where = {};
+    if (filter.name) {
+        where.name = {
+            contains: filter.name
+        };
+    }
+    if (filter.role) {
+        where.role = filter.role;
+    }
     // Get total count for pagination
     const totalResults = await prisma.user.count({
-        where: filter
+        where
     });
     const totalPages = Math.ceil(totalResults / limit);
     const skip = (page - 1) * limit;
     const users = await prisma.user.findMany({
-        where: filter,
+        where,
         select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
         skip: skip,
         take: limit,
-        orderBy: sortBy ? { [sortBy]: sortType } : undefined
+        orderBy: sortBy ? { [sortBy]: sortType } : { createdAt: 'desc' }
     });
     return {
         results: users,
@@ -91,8 +101,11 @@ const updateUserById = async (userId, updateBody, keys = ['id', 'email', 'name',
     if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
-    if (updateBody.email && (await getUserByEmail(updateBody.email))) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+    if (updateBody.email && updateBody.email !== user.email) {
+        const existingUser = await getUserByEmail(updateBody.email);
+        if (existingUser) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+        }
     }
     // Encrypt password if provided
     if (updateBody.password) {

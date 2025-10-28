@@ -1,5 +1,5 @@
-import { PrismaClient } from '../generated/prisma/index.js';
 import { Role } from '../config/constants.ts';
+import { PrismaClient } from '../generated/prisma/index.js';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();

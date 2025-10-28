@@ -34,7 +34,7 @@ const createActivity = async (data: {
  * @returns {Promise<QueryResult>}
  */
 const queryActivities = async <Key extends keyof Activity>(
-    filter: object,
+    filter: { type?: string; clientName?: string; clientId?: string },
     options: {
         limit?: number;
         page?: number;
@@ -42,21 +42,51 @@ const queryActivities = async <Key extends keyof Activity>(
         sortType?: 'asc' | 'desc';
     },
     keys: Key[] = ['id', 'type', 'clientName', 'description', 'timestamp', 'clientId'] as Key[]
-): Promise<Pick<Activity, Key>[]> => {
+): Promise<{
+    results: Pick<Activity, Key>[];
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalResults: number;
+}> => {
     const page = options.page ?? 1;
     const limit = options.limit ?? 10;
     const sortBy = options.sortBy;
     const sortType = options.sortType ?? 'desc';
 
+    // Create where clause for filtering
+    const where: Prisma.ActivityWhereInput = {};
+
+    if (filter.type) {
+        where.type = { contains: filter.type };
+    }
+    if (filter.clientName) {
+        where.clientName = { contains: filter.clientName };
+    }
+    if (filter.clientId) {
+        where.clientId = filter.clientId;
+    }
+
+    // Get total count for pagination
+    const totalResults = await prisma.activity.count({ where });
+    const totalPages = Math.ceil(totalResults / limit);
+
+    // Get activities with pagination
     const activities = await prisma.activity.findMany({
-        where: filter,
+        where,
         select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
         skip: (page - 1) * limit,
         take: limit,
         orderBy: sortBy ? { [sortBy]: sortType } : { timestamp: 'desc' }
     });
 
-    return activities as Pick<Activity, Key>[];
+    return {
+        results: activities as Pick<Activity, Key>[],
+        page,
+        limit,
+        totalPages,
+        totalResults
+    };
 };
 
 /**

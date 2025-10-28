@@ -1,6 +1,6 @@
 import prisma from "../client.js";
 import config from "../config/config.js";
-import { TokenType } from '../generated/prisma/index.js';
+import { TokenType } from "../config/constants.js";
 import ApiError from "../utils/ApiError.js";
 import userService from "./user.service.js";
 import httpStatus from 'http-status';
@@ -75,11 +75,11 @@ const generateAuthTokens = async (user) => {
     return {
         access: {
             token: accessToken,
-            expires: accessTokenExpires.toDate()
+            expires: accessTokenExpires.toISOString()
         },
         refresh: {
             token: refreshToken,
-            expires: refreshTokenExpires.toDate()
+            expires: refreshTokenExpires.toISOString()
         }
     };
 };
