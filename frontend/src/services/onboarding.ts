@@ -1,5 +1,4 @@
 import { api } from '@/lib/api';
-import { emitter } from '@/agentSdk';
 import type {
     OnboardingData,
     OnboardingSummary,
@@ -270,22 +269,6 @@ export const uploadDocument = async (
             signedUrl: URL.createObjectURL(file)
         };
 
-        // Emit bank statement uploaded event if applicable
-        if (documentTypeId === 'bank_statement') {
-            emitter.emit({
-                agentId: '37cff143-f7d2-4204-878f-020620e7697e',
-                event: 'Bank-Statement-Uploaded',
-                payload: { clientId, documentId: mockDocument.id },
-                documents: [
-                    {
-                        signedUrl: mockDocument.signedUrl!,
-                        fileName: file.name,
-                        mimeType: file.type
-                    }
-                ]
-            });
-        }
-
         return mockDocument;
     }
 
@@ -294,22 +277,6 @@ export const uploadDocument = async (
             'Content-Type': 'multipart/form-data'
         }
     });
-
-    // Emit bank statement uploaded event if applicable
-    if (documentTypeId === 'bank_statement' && response.data.signedUrl) {
-        emitter.emit({
-            agentId: '37cff143-f7d2-4204-878f-020620e7697e',
-            event: 'Bank-Statement-Uploaded',
-            payload: { clientId, documentId: response.data.id },
-            documents: [
-                {
-                    signedUrl: response.data.signedUrl,
-                    fileName: file.name,
-                    mimeType: file.type
-                }
-            ]
-        });
-    }
 
     return response.data;
 };

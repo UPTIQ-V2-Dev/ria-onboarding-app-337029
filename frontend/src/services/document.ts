@@ -1,5 +1,4 @@
 import { api } from '@/lib/api';
-import { emitter } from '@/agentSdk';
 import type {
     Document,
     DocumentType,
@@ -54,31 +53,40 @@ export const uploadDocument = async (input: CreateDocumentInput, file: File): Pr
 };
 
 export const analyzeBankStatement = async (documentId: string, file: File): Promise<TreasuryRecommendationResponse> => {
-    // Get document with signed URL
-    const document = await getDocument(documentId);
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
+        // Return mock treasury recommendations since agent is detached
+        const mockRecommendations: TreasuryRecommendationResponse = {
+            recommendations: [
+                {
+                    product: 'High-Yield Savings Account',
+                    description: 'Earn competitive interest on your cash reserves with FDIC insurance',
+                    reasoning:
+                        'Based on your transaction patterns, you maintain significant cash balances that could earn higher returns',
+                    priority: 'high'
+                },
+                {
+                    product: 'Certificate of Deposit (12-month)',
+                    description: 'Lock in guaranteed returns with a 12-month CD at competitive rates',
+                    reasoning: 'Your regular monthly deposits suggest stable cash flow suitable for CD investment',
+                    priority: 'medium'
+                },
+                {
+                    product: 'Money Market Account',
+                    description: 'Flexible access to funds while earning higher interest than traditional savings',
+                    reasoning:
+                        'Your spending patterns indicate you need liquid access while wanting to maximize returns',
+                    priority: 'medium'
+                }
+            ]
+        };
+        return mockRecommendations;
+    }
 
-    // Use agent's Bank-Statement-Uploaded event for analysis
-    const recommendations = await emitter.emit({
-        agentId: '37cff143-f7d2-4204-878f-020620e7697e',
-        event: 'Bank-Statement-Uploaded',
-        payload: {
-            documentId,
-            fileName: file.name,
-            fileSize: file.size,
-            clientId: document.clientId
-        },
-        documents: document.signedUrl
-            ? [
-                  {
-                      signedUrl: document.signedUrl,
-                      fileName: document.fileName,
-                      mimeType: file.type
-                  }
-              ]
-            : undefined
+    // Fallback to backend API analysis since agent is no longer available
+    const response = await api.post<TreasuryRecommendationResponse>('/documents/analyze-bank-statement', {
+        documentId
     });
-
-    return recommendations as TreasuryRecommendationResponse;
+    return response.data;
 };
 
 export const getDocument = async (documentId: string): Promise<Document> => {
