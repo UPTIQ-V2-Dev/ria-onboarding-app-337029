@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormLayout } from '@/components/layouts/FormLayout';
@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Upload, File, CheckCircle, Clock, AlertCircle, X, FileText } from 'lucide-react';
 import { getDocumentTypes, uploadDocument, getClientDocuments, updateOnboardingStep } from '@/services/onboarding';
+import { getClients } from '@/services/client';
 import type { DocumentType } from '@/types/onboarding';
 
 interface FileWithProgress extends File {
